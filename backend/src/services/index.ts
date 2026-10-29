@@ -1,0 +1,7 @@
+export type { AgendaRepositorio, VistaAgenda } from "./agenda-repositorio"
+export { agendar } from "./agendar"
+export type { ComandoAgendar } from "./agendar"
+export { remarcar } from "./remarcar"
+export type { ComandoRemarcar } from "./remarcar"
+export { alterarSituacao, confirmarPresenca } from "./operacao"
+export type { ComandoAlterarSituacao, ComandoConfirmarPresenca } from "./operacao"

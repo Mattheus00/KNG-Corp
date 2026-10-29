@@ -63,7 +63,7 @@ SGC/
 ├── AGENTS.md
 ├── PLANEJAMENTO-SGC.md
 ├── package.json              # scripts que orquestram os pacotes
-├── pnpm-workspace.yaml       # declara frontend e backend
+├── pnpm-workspace.yaml       # declara os pacotes existentes; hoje, backend
 ├── pnpm-lock.yaml
 ├── frontend/                 # @sgc/frontend — aplicação Next.js implantada na Vercel
 │   ├── src/app/              # rotas, layouts, páginas, server actions e route handlers
@@ -431,18 +431,18 @@ Consultar referências para detalhes técnicos; elas não alteram o escopo autor
 
 ### Comandos
 
-Ainda não há código executável. Os scripts abaixo são os previstos para a raiz do workspace; ao criá-los, atualizar esta lista com os comandos reais.
+O backend já executa `pnpm test` e `pnpm typecheck`. Os demais scripts continuam previstos até existirem o frontend, o ESLint e o Supabase local.
 
 | Comando | Finalidade |
 | --- | --- |
 | `pnpm install` | Instalar dependências de todos os pacotes |
-| `pnpm dev` | Executar o frontend localmente |
-| `pnpm build` | Build de produção |
-| `pnpm lint` | ESLint em todos os pacotes |
-| `pnpm typecheck` | Verificação de tipos em todos os pacotes |
+| `pnpm dev` | Executar o frontend localmente. Ainda não existe |
+| `pnpm build` | Build de produção. Ainda não existe |
+| `pnpm lint` | ESLint em todos os pacotes. Ainda não existe |
+| `pnpm typecheck` | Verificação de tipos do backend |
 | `pnpm test` | Testes Vitest do backend |
-| `pnpm test:e2e` | Testes Playwright do frontend |
-| `pnpm db:types` | Regenerar os tipos do banco a partir do Supabase local |
+| `pnpm test:e2e` | Testes Playwright do frontend. Ainda não existe |
+| `pnpm db:types` | Regenerar os tipos do banco a partir do Supabase local. Ainda não existe |
 
 Comandos do Supabase CLI são executados a partir de `backend/`. Não rodar comandos que alterem o banco remoto, como aplicar migrações ou resetar dados, sem pedido explícito.
 

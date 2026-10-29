@@ -1,0 +1,9 @@
+{
+  "name": "sgc",
+  "private": true,
+  "packageManager": "pnpm@11.20.0",
+  "scripts": {
+    "test": "pnpm --filter @sgc/backend test",
+    "typecheck": "pnpm --filter @sgc/backend typecheck"
+  }
+}
