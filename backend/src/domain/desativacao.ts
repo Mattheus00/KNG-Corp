@@ -1,6 +1,8 @@
 import type { Agendamento } from "./agendamento"
 
-// Lista o que precisa ser remarcado. Não cancela nem apaga o histórico.
+// Lista consultas futuras que ainda precisam de remarcação. Não cancela, não
+// transfere e não apaga o histórico. Atendimento já iniciado, cujo horário de
+// início já passou, fica de fora: o tratamento operacional continua pendente.
 export function consultasAfetadasPorDesativacao<T extends Pick<Agendamento, "profissionalId" | "inicio" | "situacao">>(
   consultas: readonly T[],
   profissionalId: string,

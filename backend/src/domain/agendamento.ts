@@ -14,6 +14,13 @@ export type Agendamento = {
 
 export type AcaoHistorico = "agendar" | "remarcar" | "alterar_situacao" | "confirmar_presenca"
 
+export type AlteracaoHorario = {
+  inicioAnterior: Date
+  fimAnterior: Date
+  inicioNovo: Date
+  fimNovo: Date
+}
+
 export type RegistroHistorico = {
   agendamentoId: string
   autorId: string
@@ -22,4 +29,5 @@ export type RegistroHistorico = {
   situacaoAnterior: SituacaoAtendimento | null
   situacaoNova: SituacaoAtendimento
   motivo: string | null
+  horario: AlteracaoHorario | null
 }

@@ -1,8 +1,9 @@
 import type { Agendamento, RegistroHistorico } from "../domain"
 
-// A implementação no PostgreSQL precisa impedir a sobreposição na mesma transação,
-// com EXCLUDE USING gist sobre profissional e intervalo, nas consultas que ocupam a agenda.
-// O esquema ainda não existe: o isolamento da demonstração altera RLS e autenticação.
+// Resultado com ok: false e exceção não persistem escrita parcial. O simulador de
+// testes desfaz o rascunho nesses dois casos. No PostgreSQL, a mesma transação
+// precisa da exclusão GiST sobre profissional e intervalo. O esquema ainda não
+// existe: o isolamento da demonstração altera RLS e autenticação.
 export type VistaAgenda = {
   listarPorProfissional(profissionalId: string): readonly Agendamento[]
   obter(id: string): Agendamento | null

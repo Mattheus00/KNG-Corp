@@ -184,4 +184,94 @@ describe("agendamento", () => {
     expect(atendimento.ok).toBe(true)
     expect(conclusao.ok && conclusao.valor.situacao).toBe("concluido")
   })
+
+  test("remarcação zera a confirmação, guarda os horários e não grava pedido idêntico nem falha", async () => {
+    const agenda = criarAgendaMemoria()
+    const criada = await agendar(agenda, comandoAgendar(paciente, paciente.id, 9))
+    if (!criada.ok) throw new Error(criada.erro.mensagem)
+
+    await confirmarPresenca(agenda, { ator: recepcao, agendamentoId: criada.valor.id, agora })
+    const igual = await remarcar(agenda, {
+      ator: paciente,
+      agendamentoId: criada.valor.id,
+      inicio: naClinica(2026, 10, 30, 9),
+      duracaoMinutos: 60,
+      agora,
+      profissionalHabilitado: true,
+      expediente,
+      bloqueios: [],
+    })
+    expect(igual.ok && igual.valor.presencaConfirmada).toBe(true)
+    expect(agenda.listarHistorico(criada.valor.id).map((registro) => registro.acao)).toEqual([
+      "agendar",
+      "confirmar_presenca",
+    ])
+
+    const paraOnze = await remarcar(agenda, {
+      ator: paciente,
+      agendamentoId: criada.valor.id,
+      inicio: naClinica(2026, 10, 30, 11),
+      duracaoMinutos: 60,
+      agora,
+      profissionalHabilitado: true,
+      expediente,
+      bloqueios: [],
+    })
+    expect(paraOnze.ok && paraOnze.valor.presencaConfirmada).toBe(false)
+    expect(agenda.listarHistorico(criada.valor.id).at(-1)?.horario).toMatchObject({
+      inicioAnterior: naClinica(2026, 10, 30, 9),
+      inicioNovo: naClinica(2026, 10, 30, 11),
+    })
+
+    await confirmarPresenca(agenda, { ator: recepcao, agendamentoId: criada.valor.id, agora })
+    await agendar(agenda, comandoAgendar(recepcao, "paciente-2", 15))
+    const antesDaFalha = agenda.listarHistorico(criada.valor.id).length
+    const recusada = await remarcar(agenda, {
+      ator: paciente,
+      agendamentoId: criada.valor.id,
+      inicio: naClinica(2026, 10, 30, 15),
+      duracaoMinutos: 60,
+      agora,
+      profissionalHabilitado: true,
+      expediente,
+      bloqueios: [],
+    })
+    expect(recusada).toMatchObject({ ok: false, erro: { codigo: "conflito_horario" } })
+    expect(agenda.listar().find((consulta) => consulta.id === criada.valor.id)).toMatchObject({
+      presencaConfirmada: true,
+    })
+    expect(agenda.listar().find((consulta) => consulta.id === criada.valor.id)?.inicio.toISOString()).toBe(
+      naClinica(2026, 10, 30, 11).toISOString(),
+    )
+    expect(agenda.listarHistorico(criada.valor.id)).toHaveLength(antesDaFalha)
+
+    const paraQuatorze = await remarcar(agenda, {
+      ator: paciente,
+      agendamentoId: criada.valor.id,
+      inicio: naClinica(2026, 10, 30, 14),
+      duracaoMinutos: 60,
+      agora,
+      profissionalHabilitado: true,
+      expediente,
+      bloqueios: [],
+    })
+    expect(paraQuatorze.ok && paraQuatorze.valor.presencaConfirmada).toBe(false)
+    const remarcacoes = agenda.listarHistorico(criada.valor.id).filter((registro) => registro.acao === "remarcar")
+    expect(remarcacoes.map((registro) => registro.horario?.inicioAnterior.toISOString())).toEqual([
+      naClinica(2026, 10, 30, 9).toISOString(),
+      naClinica(2026, 10, 30, 11).toISOString(),
+    ])
+    expect(remarcacoes.every((registro) => registro.autorId === paciente.id)).toBe(true)
+  })
+
+  test("relógio inválido não grava a reserva", async () => {
+    const agenda = criarAgendaMemoria()
+    const resultado = await agendar(agenda, {
+      ...comandoAgendar(recepcao, "paciente-1", 9),
+      agora: new Date(Number.NaN),
+    })
+
+    expect(resultado).toMatchObject({ ok: false, erro: { codigo: "relogio_invalido" } })
+    expect(agenda.listar()).toHaveLength(0)
+  })
 })

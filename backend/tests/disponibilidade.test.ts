@@ -113,4 +113,67 @@ describe("disponibilidade", () => {
       }),
     ).toMatchObject({ ok: false, erro: { codigo: "profissional_nao_habilitado" } })
   })
+
+  test("aceita o instante atual, recusa relógio inválido e não trata horários encostados como conflito", () => {
+    const inicio = naClinica(2026, 10, 30, 9)
+    const meio = naClinica(2026, 10, 30, 10)
+
+    expect(
+      avaliarReserva({
+        inicio,
+        fim: meio,
+        agora: inicio,
+        profissionalHabilitado: true,
+        expediente,
+        bloqueios: [],
+        ocupadas: [],
+      }).ok,
+    ).toBe(true)
+
+    expect(
+      avaliarReserva({
+        inicio,
+        fim: meio,
+        agora: new Date(Number.NaN),
+        profissionalHabilitado: true,
+        expediente,
+        bloqueios: [],
+        ocupadas: [],
+      }),
+    ).toMatchObject({ ok: false, erro: { codigo: "relogio_invalido" } })
+
+    expect(
+      avaliarReserva({
+        inicio: new Date(Number.NaN),
+        fim: meio,
+        agora,
+        profissionalHabilitado: true,
+        expediente,
+        bloqueios: [],
+        ocupadas: [],
+      }),
+    ).toMatchObject({ ok: false, erro: { codigo: "duracao_invalida" } })
+
+    const horarios = horariosDisponiveis({
+      duracaoMinutos: 60,
+      passoMinutos: 60,
+      agora: new Date(Number.NaN),
+      expediente,
+      bloqueios: [],
+      ocupadas: [],
+    })
+    expect(horarios).toEqual([])
+
+    expect(
+      avaliarReserva({
+        inicio: meio,
+        fim: naClinica(2026, 10, 30, 11),
+        agora,
+        profissionalHabilitado: true,
+        expediente,
+        bloqueios: [],
+        ocupadas: [{ inicio, fim: meio }],
+      }).ok,
+    ).toBe(true)
+  })
 })

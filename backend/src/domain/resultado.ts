@@ -11,10 +11,17 @@ export type CodigoErro =
   | "consulta_nao_encontrada"
   | "presenca_nao_permitida"
   | "entrada_invalida"
+  | "relogio_invalido"
+
+export type ErroCampo = {
+  campo: string
+  mensagem: string
+}
 
 export type ErroNegocio = {
   codigo: CodigoErro
   mensagem: string
+  campos?: readonly ErroCampo[]
 }
 
 export type Falha = {
@@ -28,6 +35,11 @@ export function sucesso<T>(valor: T): Resultado<T> {
   return { ok: true, valor }
 }
 
-export function falha(codigo: CodigoErro, mensagem: string): Falha {
-  return { ok: false, erro: { codigo, mensagem } }
+export function falha(
+  codigo: CodigoErro,
+  mensagem: string,
+  campos?: readonly ErroCampo[],
+): Falha {
+  if (!campos || campos.length === 0) return { ok: false, erro: { codigo, mensagem } }
+  return { ok: false, erro: { codigo, mensagem, campos } }
 }

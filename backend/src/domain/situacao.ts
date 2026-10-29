@@ -62,3 +62,6 @@ export function podeRemarcarSituacao(
 export function motivoObrigatorio(situacao: SituacaoAtendimento): boolean {
   return situacao === "cancelado"
 }
+
+// Teto técnico do motivo operacional. Não é prazo, multa nem regra comercial.
+export const LIMITE_MOTIVO_CANCELAMENTO = 200

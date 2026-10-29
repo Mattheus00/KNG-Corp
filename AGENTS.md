@@ -153,8 +153,8 @@ SGC/
 - Remarcação deve ser atômica: se o novo horário não puder ser reservado, preservar a consulta original.
 - Não aceitar agendamentos no passado. Usar o fuso `America/Sao_Paulo` para a clínica inicial e tratar conversões explicitamente.
 - Fluxo principal: agendado → chegou → em atendimento → concluído. Cancelado e falta são desfechos alternativos, com transições permitidas por papel.
-- Confirmação de presença é separada da situação do atendimento.
-- Guardar histórico mínimo de alterações, com autor, momento, ação, situação anterior, nova situação, motivo quando aplicável e referência ao agendamento. Cancelamentos registram motivo, porque o dashboard apresenta os motivos. Não copiar dados sensíveis desnecessários para logs.
+- Confirmação de presença é separada da situação do atendimento. Ela vale para o horário vigente: remarcar para outro horário exige nova confirmação, e um pedido sem mudança de horário não gera histórico. A antecedência continua pendente (seção 19).
+- Guardar histórico mínimo de alterações, com autor, momento, ação, situação anterior, nova situação, motivo quando aplicável e referência ao agendamento. Na remarcação, guardar também o intervalo anterior e o novo. Cancelamentos registram motivo, porque o dashboard apresenta os motivos. Não copiar dados sensíveis desnecessários para logs.
 - Desativação de funcionário não apaga histórico. Ao desativar um profissional com consultas futuras, listar os agendamentos afetados e encaminhar sua remarcação; não deixar consultas órfãs nem cancelá-las silenciosamente.
 - Limitar abuso das rotas públicas: quantidade de reservas ativas por paciente e frequência de cadastro, login e reserva. Os limites concretos são decisão pendente; CAPTCHA envolve novo fornecedor e depende de validação.
 - Vincular conta a cadastro prévio somente após verificação; nome coincidente não é suficiente.
@@ -402,7 +402,7 @@ Decisões pendentes dentro do MVP, a resolver quando necessárias:
 | Decisão | Motivo | Situação |
 | --- | --- | --- |
 | Identidade e conteúdo da clínica fictícia | Preencher apresentação, equipe, serviços e informações de negócio | Pendente |
-| Regras de cancelamento e remarcação | Implementar o mesmo comportamento descrito nos termos | Pendente |
+| Regras de cancelamento e remarcação | A antecedência e as demais condições comerciais continuam pendentes. A confirmação de presença já acompanha o horário vigente | Pendente |
 | Valores ou indicação de avaliação prévia | Comunicar preços sem condições ocultas | Pendente |
 | Dados de contato obrigatórios e retenção | Coletar somente o necessário e refletir isso na política | Pendente |
 | Domínio público e acesso às ferramentas de busca | Concluir canonical, sitemap, verificação de propriedade e acompanhamento de indexação | Pendente |

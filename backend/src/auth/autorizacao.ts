@@ -24,6 +24,8 @@ export function podeAtribuirPapel(ator: Ator, papel: Papel): boolean {
 }
 
 export function podeAgendar(ator: Ator, pacienteId: string): Resultado<null> {
+  // Enquanto não houver vínculo verificado entre conta e cadastro da recepção,
+  // o paciente autenticado é o próprio pacienteId. Nome ou e-mail não autorizam.
   if (ator.papeis.includes("recepcao")) return sucesso(null)
   if (ator.papeis.includes("paciente") && ator.id === pacienteId) return sucesso(null)
   return falha("sem_permissao", "Você não pode agendar para este paciente.")

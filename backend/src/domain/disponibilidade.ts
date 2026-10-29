@@ -27,7 +27,11 @@ export function duracaoAtendimentoValida(duracaoMinutos: number): boolean {
 // O passo é explícito. Sem uma grade aprovada, quem chama informa o passo;
 // o agendamento usa a duração do serviço, alinhada ao início de cada trecho livre.
 export function horariosDisponiveis(pedido: PedidoDisponibilidade): Date[] {
-  if (!duracaoAtendimentoValida(pedido.duracaoMinutos) || !duracaoAtendimentoValida(pedido.passoMinutos)) {
+  if (
+    !duracaoAtendimentoValida(pedido.duracaoMinutos) ||
+    !duracaoAtendimentoValida(pedido.passoMinutos) ||
+    !instanteValido(pedido.agora)
+  ) {
     return []
   }
 
@@ -55,10 +59,17 @@ export function horariosDisponiveis(pedido: PedidoDisponibilidade): Date[] {
 }
 
 export function avaliarReserva(contexto: ContextoReserva): Resultado<null> {
+  if (!instanteValido(contexto.agora)) {
+    return falha("relogio_invalido", "Não foi possível validar o horário atual.")
+  }
+
   if (
-    Number.isNaN(contexto.inicio.getTime()) ||
-    Number.isNaN(contexto.fim.getTime()) ||
-    contexto.fim <= contexto.inicio
+    !instanteValido(contexto.inicio) ||
+    !instanteValido(contexto.fim) ||
+    contexto.fim <= contexto.inicio ||
+    !intervalosValidos(contexto.expediente) ||
+    !intervalosValidos(contexto.bloqueios) ||
+    !intervalosValidos(contexto.ocupadas)
   ) {
     return falha("duracao_invalida", "O horário do atendimento é inválido.")
   }
@@ -83,4 +94,14 @@ export function avaliarReserva(contexto: ContextoReserva): Resultado<null> {
   }
 
   return sucesso(null)
+}
+
+function instanteValido(instante: Date): boolean {
+  return instante instanceof Date && !Number.isNaN(instante.getTime())
+}
+
+function intervalosValidos(intervalos: readonly Intervalo[]): boolean {
+  return intervalos.every(
+    (intervalo) => instanteValido(intervalo.inicio) && instanteValido(intervalo.fim) && intervalo.inicio < intervalo.fim,
+  )
 }

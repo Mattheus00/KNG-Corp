@@ -109,4 +109,37 @@ describe("indicadores", () => {
     expect(afetadas.map((consulta) => consulta.id)).toEqual(["futura"])
     expect(todas).toHaveLength(3)
   })
+
+  test("ocupação recorta consulta que atravessa o período e soma os profissionais", () => {
+    const periodoCurto = {
+      inicio: naClinica(2026, 10, 30, 10),
+      fim: naClinica(2026, 10, 30, 11),
+    }
+    const indicadores = calcularIndicadores({
+      agora: naClinica(2026, 10, 30, 12),
+      periodo: periodoCurto,
+      expedientes: [
+        { profissionalId: "profissional-1", expediente: [periodoCurto], bloqueios: [] },
+        { profissionalId: "profissional-2", expediente: [periodoCurto], bloqueios: [] },
+      ],
+      consultas: [
+        consulta("agendado", 9, {
+          inicio: naClinica(2026, 10, 30, 9, 30),
+          fim: naClinica(2026, 10, 30, 10, 30),
+        }),
+        consulta("agendado", 10, { profissionalId: "profissional-2" }),
+        consulta("cancelado", 10),
+        consulta("agendado", 9, { fim: naClinica(2026, 10, 30, 10) }),
+        consulta("agendado", 11),
+      ],
+    })
+
+    expect(indicadores.consultasPrevistas.agendado).toBe(1)
+    expect(indicadores.ocupacaoPlanejada).toEqual({
+      tipo: "valor",
+      numerador: 90,
+      denominador: 120,
+      valor: 0.75,
+    })
+  })
 })

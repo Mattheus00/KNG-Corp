@@ -71,6 +71,7 @@ export async function agendar(
       situacaoAnterior: null,
       situacaoNova: "agendado",
       motivo: null,
+      horario: null,
     })
     return sucesso(consulta)
   })

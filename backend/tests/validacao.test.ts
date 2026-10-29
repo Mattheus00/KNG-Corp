@@ -15,11 +15,28 @@ describe("validação de entrada", () => {
     expect(pedido.ok).toBe(true)
   })
 
-  test("rejeita identificador inválido e cancelamento sem motivo", () => {
-    expect(lerPedidoAgendamento({ pacienteId: "nao-e-uuid" }).ok).toBe(false)
+  test("rejeita identificador inválido sem devolver o valor informado", () => {
+    const pedido = lerPedidoAgendamento({ pacienteId: "nao-e-uuid" })
+
+    expect(pedido.ok).toBe(false)
+    if (pedido.ok) return
+    expect(pedido.erro.campos).toEqual(
+      expect.arrayContaining([expect.objectContaining({ campo: "pacienteId", mensagem: "Identificador inválido." })]),
+    )
+    expect(JSON.stringify(pedido.erro)).not.toContain("nao-e-uuid")
+  })
+
+  test("rejeita cancelamento sem motivo ou com motivo longo demais", () => {
     expect(lerPedidoCancelamento({ agendamentoId: id, motivo: "   " })).toMatchObject({
       ok: false,
       erro: { codigo: "entrada_invalida" },
+    })
+    expect(lerPedidoCancelamento({ agendamentoId: id, motivo: "a".repeat(201) })).toMatchObject({
+      ok: false,
+      erro: {
+        codigo: "entrada_invalida",
+        campos: [expect.objectContaining({ campo: "motivo", mensagem: "O texto informado é longo demais." })],
+      },
     })
   })
 })

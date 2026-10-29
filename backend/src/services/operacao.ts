@@ -1,6 +1,7 @@
 import { podeAlterarSituacao, podeConfirmarPresenca } from "../auth"
 import {
   falha,
+  LIMITE_MOTIVO_CANCELAMENTO,
   motivoObrigatorio,
   sucesso,
   type Agendamento,
@@ -32,6 +33,9 @@ export async function alterarSituacao(
   if (motivoObrigatorio(comando.situacao) && motivo.length === 0) {
     return falha("motivo_obrigatorio", "Informe o motivo do cancelamento.")
   }
+  if (motivoObrigatorio(comando.situacao) && motivo.length > LIMITE_MOTIVO_CANCELAMENTO) {
+    return falha("entrada_invalida", "O motivo do cancelamento é longo demais.")
+  }
 
   return repositorio.transacao((vista) => {
     const atual = vista.obter(comando.agendamentoId)
@@ -53,6 +57,7 @@ export async function alterarSituacao(
       situacaoAnterior: atual.situacao,
       situacaoNova: comando.situacao,
       motivo: comando.situacao === "cancelado" ? motivo : null,
+      horario: null,
     })
     return sucesso(atualizada)
   })
@@ -82,6 +87,7 @@ export async function confirmarPresenca(
       situacaoAnterior: atual.situacao,
       situacaoNova: atual.situacao,
       motivo: null,
+      horario: null,
     })
     return sucesso(atualizada)
   })

@@ -53,7 +53,7 @@ export function calcularIndicadores(entrada: {
     consultasPrevistas,
     atendimentosConcluidos: consultasPrevistas.concluido,
     taxaFaltas: calcularTaxaFaltas(noPeriodo, entrada.agora),
-    ocupacaoPlanejada: calcularOcupacao(noPeriodo, entrada.expedientes, entrada.periodo),
+    ocupacaoPlanejada: calcularOcupacao(entrada.consultas, entrada.expedientes, entrada.periodo),
     cancelamentos: contarCancelamentos(noPeriodo),
     distribuicaoPorServico: distribuirPorServico(noPeriodo),
   }

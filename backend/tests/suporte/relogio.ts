@@ -2,7 +2,9 @@ import { instanteNoFuso, type Intervalo, type RelogioLocal } from "../../src/dom
 
 export function naClinica(ano: number, mes: number, dia: number, hora: number, minuto = 0): Date {
   const relogio: RelogioLocal = { ano, mes, dia, hora, minuto }
-  return instanteNoFuso(relogio)
+  const instante = instanteNoFuso(relogio)
+  if (!instante.ok) throw new Error(instante.erro.mensagem)
+  return instante.valor
 }
 
 export function expedienteDoDia(ano: number, mes: number, dia: number, abertura = 8, fechamento = 18): Intervalo {

@@ -2,6 +2,7 @@ export { papelDoCadastroPublico, PAPEIS } from "./papeis"
 export type { Ator, Papel } from "./papeis"
 
 export {
+  LIMITE_MOTIVO_CANCELAMENTO,
   motivoObrigatorio,
   ocupaAgenda,
   podeRemarcarSituacao,
@@ -10,7 +11,7 @@ export {
 } from "./situacao"
 export type { SituacaoAtendimento } from "./situacao"
 
-export type { Agendamento, AcaoHistorico, RegistroHistorico } from "./agendamento"
+export type { Agendamento, AcaoHistorico, AlteracaoHorario, RegistroHistorico } from "./agendamento"
 
 export { FUSO_CLINICA, instanteNoFuso, relogioNoFuso } from "./fuso"
 export type { RelogioLocal } from "./fuso"
@@ -38,4 +39,4 @@ export type {
 export { consultasAfetadasPorDesativacao } from "./desativacao"
 
 export { falha, sucesso } from "./resultado"
-export type { CodigoErro, ErroNegocio, Falha, Resultado } from "./resultado"
+export type { CodigoErro, ErroCampo, ErroNegocio, Falha, Resultado } from "./resultado"

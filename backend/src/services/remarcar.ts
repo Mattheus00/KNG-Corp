@@ -55,10 +55,17 @@ export async function remarcar(
     })
     if (!avaliacao.ok) return avaliacao
 
+    const inicioNovo = new Date(comando.inicio)
+    if (atual.inicio.getTime() === inicioNovo.getTime() && atual.fim.getTime() === fim.getTime()) {
+      return sucesso(atual)
+    }
+
+    // A confirmação vale para o horário vigente. A antecedência da remarcação continua pendente.
     const atualizada: Agendamento = {
       ...atual,
-      inicio: new Date(comando.inicio),
+      inicio: inicioNovo,
       fim,
+      presencaConfirmada: false,
     }
     vista.substituir(atualizada, {
       agendamentoId: atualizada.id,
@@ -68,6 +75,12 @@ export async function remarcar(
       situacaoAnterior: atual.situacao,
       situacaoNova: atual.situacao,
       motivo: null,
+      horario: {
+        inicioAnterior: new Date(atual.inicio),
+        fimAnterior: new Date(atual.fim),
+        inicioNovo,
+        fimNovo: new Date(fim),
+      },
     })
     return sucesso(atualizada)
   })
