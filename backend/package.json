@@ -10,13 +10,15 @@
     "./domain": "./src/domain/index.ts",
     "./auth": "./src/auth/index.ts",
     "./validation": "./src/validation/index.ts",
-    "./services": "./src/services/index.ts"
+    "./services": "./src/services/index.ts",
+    "./data": "./src/data/index.ts"
   },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "server-only": "^0.0.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {

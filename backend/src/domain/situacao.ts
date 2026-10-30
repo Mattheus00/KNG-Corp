@@ -47,7 +47,10 @@ export function transicaoPermitida(
   nova: SituacaoAtendimento,
   papeis: readonly Papel[],
 ): boolean {
-  const permitidos = TRANSICOES[atual][nova]
+  if (!Object.hasOwn(TRANSICOES, atual)) return false
+  const mapaAtual = TRANSICOES[atual]
+  if (!Object.hasOwn(mapaAtual, nova)) return false
+  const permitidos = mapaAtual[nova]
   if (!permitidos) return false
   return papeis.some((papel) => permitidos.includes(papel))
 }

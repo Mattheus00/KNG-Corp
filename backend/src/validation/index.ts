@@ -1,9 +1,31 @@
 export {
+  esquemaAtualizacaoPaciente,
+  esquemaCadastroPacientePublico,
+  esquemaCadastroPacienteRecepcao,
+  esquemaConviteFuncionario,
   esquemaPedidoAgendamento,
+  esquemaPedidoAlterarSituacao,
   esquemaPedidoCancelamento,
+  esquemaPedidoConfirmarPresenca,
   esquemaPedidoRemarcacao,
+  lerAtualizacaoPaciente,
+  lerCadastroPacientePublico,
+  lerCadastroPacienteRecepcao,
+  lerConviteFuncionario,
   lerPedidoAgendamento,
+  lerPedidoAlterarSituacao,
   lerPedidoCancelamento,
+  lerPedidoConfirmarPresenca,
   lerPedidoRemarcacao,
 } from "./esquemas"
-export type { PedidoAgendamento, PedidoCancelamento, PedidoRemarcacao } from "./esquemas"
+export type {
+  AtualizacaoPaciente,
+  CadastroPacientePublico,
+  CadastroPacienteRecepcao,
+  ConviteFuncionario,
+  PedidoAgendamento,
+  PedidoAlterarSituacao,
+  PedidoCancelamento,
+  PedidoConfirmarPresenca,
+  PedidoRemarcacao,
+} from "./esquemas"
