@@ -2,7 +2,9 @@
 
 ## 1. Objetivo e autoridade
 
-Construir um WebApp responsivo e acessível de uma clínica odontológica, com uma unidade, vários profissionais e quatro perfis: paciente, recepção, dentista e gestor. A aplicação deve demonstrar a jornada completa de agendamento, atendimento e acompanhamento gerencial, pelo navegador em celulares, tablets, notebooks e desktops, incluindo dispositivos modestos e conexões limitadas.
+Construir um WebApp responsivo e acessível de gestão odontológica, no modelo de um SaaS demonstrativo: várias clínicas isoladas, cada uma com uma unidade, vários profissionais e quatro perfis (paciente, recepção, dentista e gestor). A aplicação deve demonstrar a jornada completa de agendamento, atendimento e acompanhamento gerencial, pelo navegador em celulares, tablets, notebooks e desktops, incluindo dispositivos modestos e conexões limitadas.
+
+Nesta etapa os dados ficam em memória, por sessão. Cada clínica é identificada pelo caminho `/c/[slug]`. A clínica Aurora (`/c/aurora`) é o exemplo já preenchido. A persistência em Supabase, com `clinica_id` e RLS, é a etapa seguinte e não faz parte desta entrega.
 
 Este arquivo registra a stack e as regras de trabalho. O detalhamento funcional está em `PLANEJAMENTO-SGC.md`. As definições deste arquivo atualizam as escolhas técnicas anteriormente em aberto. Instruções explícitas dos responsáveis pelo projeto prevalecem sobre estes documentos.
 
@@ -12,6 +14,7 @@ O PDF `Planejamento de skill.pdf` foi consultado como referência de qualidade d
 
 - Trabalhar somente nas funcionalidades do planejamento, respeitando a etapa solicitada.
 - A primeira entrega é o MVP/P0. As evoluções P1/P2 e etapas posteriores são backlog, não autorização automática para implementá-las.
+- Múltiplas clínicas, em memória e isoladas por sessão, estão aprovadas nesta etapa. Isso não autoriza Supabase, Auth real, cobrança nem várias unidades dentro da mesma clínica.
 - Política de Privacidade, Termos de Serviço, avaliação dos SDKs utilizados, minimização de dados, transparência de preços, contraste, identificação do negócio, responsividade, desempenho, otimização de mídia e SEO/GEO são requisitos transversais do MVP.
 - Sugestões de novas funcionalidades devem ser listadas para validação dos responsáveis antes de qualquer implementação.
 - Para cada sugestão, informar problema, benefício, impacto no escopo, dependências/custos conhecidos e situação: pendente, aprovada ou rejeitada. Não inventar estimativas de custo.
@@ -95,8 +98,9 @@ SGC/
 
 ### Site público
 
-- Apresentação da clínica fictícia, serviços, equipe, localização e contatos.
-- Entrada para agendamento e acesso ao portal.
+- Landing do SGC, sem preços inventados: gratuito durante a fase de demonstração, sem checkout.
+- Cadastro de clínica (nome, slug, responsável) e página pública de cada clínica em `/c/[slug]`.
+- Clínica de exemplo Aurora, com serviços, equipe, localização e contatos fictícios.
 - Identificação clara de ambiente demonstrativo.
 - Links acessíveis para Política de Privacidade e Termos de Serviço.
 
@@ -134,8 +138,8 @@ SGC/
 ### Acesso demonstrativo
 
 - Contas demonstrativas por perfil ou entrada guiada, sempre com dados fictícios.
-- Um visitante não pode alterar o cenário de outro: o case precisa de isolamento entre sessões de demonstração e de um mecanismo controlado para restaurar os dados fictícios.
-- O mecanismo de isolamento e restauração é decisão pendente (seção 19). Decidir antes de modelar o banco, porque afeta esquema, RLS e autenticação.
+- Um visitante não pode alterar o cenário de outro. Nesta etapa o isolamento é a sessão em memória, e cada clínica da sessão é isolada das demais. Restaurar a demonstração recria só a Aurora e descarta as clínicas criadas na sessão.
+- Antes de modelar o banco, o isolamento precisa virar `clinica_id` com RLS. Essa etapa ainda não começou.
 - Contas demonstrativas não podem conceder papéis, ler dados de outros ambientes nem acionar envios reais.
 
 ## 5. Regras de negócio e permissões
@@ -395,7 +399,14 @@ Os itens abaixo já aparecem no planejamento, mas dependem da escolha explícita
 - Fila de espera, retornos recorrentes e controle de cadeiras/salas.
 - Orçamentos, planos de tratamento, financeiro e pagamentos online.
 - Anamnese, odontograma, evolução clínica e anexos.
-- Estoque, múltiplas unidades, múltiplas clínicas e integrações adicionais.
+- Estoque, múltiplas unidades por clínica e integrações adicionais.
+- Múltiplas clínicas em banco (Supabase, `clinica_id` e RLS). A versão em memória já está nesta etapa.
+
+Decisões desta etapa:
+
+- A clínica é identificada pelo caminho `/c/[slug]`, não por subdomínio.
+- A landing não mostra preços. O texto é “Gratuito durante a fase de demonstração”, sem checkout.
+- Cada sessão aceita no máximo 3 clínicas, limite técnico da memória.
 
 Decisões pendentes dentro do MVP, a resolver quando necessárias:
 

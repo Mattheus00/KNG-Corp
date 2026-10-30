@@ -12,7 +12,7 @@ O futuro portfólio de vocês será um projeto próprio, no qual este produto ap
 
 ## 2. Premissas para a primeira versão
 
-- Uma clínica fictícia, com uma unidade e vários profissionais.
+- Uma plataforma demonstrativa com várias clínicas isoladas por sessão. A Aurora é a clínica de exemplo, com uma unidade e vários profissionais. Cada clínica criada pelo visitante também tem uma única unidade.
 - Aplicação web responsiva: paciente principalmente no celular; equipe principalmente no computador.
 - Quatro perfis de acesso, com permissões verificadas no servidor.
 - Dados fictícios para desenvolvimento, screenshots, vídeo e demonstração pública.

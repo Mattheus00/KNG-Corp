@@ -13,6 +13,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: `${URL_BASE}/cadastro`,
+      lastModified: ultimaModificacao,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${URL_BASE}/c/aurora`,
+      lastModified: ultimaModificacao,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
       url: `${URL_BASE}/privacidade`,
       lastModified: ultimaModificacao,
       changeFrequency: "monthly",

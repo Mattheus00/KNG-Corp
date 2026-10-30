@@ -106,35 +106,35 @@ export function PainelAcesso({
 
   return (
     <div className="space-y-6">
-      {/* Compact App Header + Segmented Pill Tabs */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="module-heading">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#002664]">
+          <p className="eyebrow">Conecte-se à clínica</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">
             Acesso e Perfis
           </h1>
-          <p className="text-sm text-[#495054]">
+          <p className="text-sm text-muted">
             Alterne entre contas de demonstração ou crie uma conta de paciente
           </p>
         </div>
 
         <div
-          role="tablist"
+          role="group"
           aria-label="Formas de acesso ao sistema"
-          className="inline-flex flex-wrap rounded-2xl border border-[#E2E8F0] bg-white p-1.5 shadow-xs"
+          className="module-tabs"
         >
           <button
             type="button"
-            role="tab"
-            aria-selected={abaAtiva === "demo"}
+
+            aria-pressed={abaAtiva === "demo"}
             onClick={() => {
               setAbaAtiva("demo")
               setMensagemErro(null)
               setMensagemSucesso(null)
             }}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+            className={`rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
               abaAtiva === "demo"
-                ? "bg-[#002664] text-white shadow-xs"
-                : "text-[#495054] hover:bg-[#F1F5F9] hover:text-[#002664]"
+                ? "bg-ink text-white "
+                : "text-muted hover:bg-soft hover:text-ink"
             }`}
           >
             Contas Demo
@@ -142,17 +142,17 @@ export function PainelAcesso({
 
           <button
             type="button"
-            role="tab"
-            aria-selected={abaAtiva === "cadastro"}
+
+            aria-pressed={abaAtiva === "cadastro"}
             onClick={() => {
               setAbaAtiva("cadastro")
               setMensagemErro(null)
               setMensagemSucesso(null)
             }}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+            className={`rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
               abaAtiva === "cadastro"
-                ? "bg-[#002664] text-white shadow-xs"
-                : "text-[#495054] hover:bg-[#F1F5F9] hover:text-[#002664]"
+                ? "bg-ink text-white "
+                : "text-muted hover:bg-soft hover:text-ink"
             }`}
           >
             Criar Conta
@@ -160,17 +160,17 @@ export function PainelAcesso({
 
           <button
             type="button"
-            role="tab"
-            aria-selected={abaAtiva === "login"}
+
+            aria-pressed={abaAtiva === "login"}
             onClick={() => {
               setAbaAtiva("login")
               setMensagemErro(null)
               setMensagemSucesso(null)
             }}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+            className={`rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
               abaAtiva === "login"
-                ? "bg-[#002664] text-white shadow-xs"
-                : "text-[#495054] hover:bg-[#F1F5F9] hover:text-[#002664]"
+                ? "bg-ink text-white "
+                : "text-muted hover:bg-soft hover:text-ink"
             }`}
           >
             Entrar
@@ -178,17 +178,17 @@ export function PainelAcesso({
 
           <button
             type="button"
-            role="tab"
-            aria-selected={abaAtiva === "recuperacao"}
+
+            aria-pressed={abaAtiva === "recuperacao"}
             onClick={() => {
               setAbaAtiva("recuperacao")
               setMensagemErro(null)
               setMensagemSucesso(null)
             }}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+            className={`rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
               abaAtiva === "recuperacao"
-                ? "bg-[#002664] text-white shadow-xs"
-                : "text-[#495054] hover:bg-[#F1F5F9] hover:text-[#002664]"
+                ? "bg-ink text-white "
+                : "text-muted hover:bg-soft hover:text-ink"
             }`}
           >
             Recuperar
@@ -199,7 +199,7 @@ export function PainelAcesso({
       {mensagemErro && (
         <div
           role="alert"
-          className="rounded-xl border border-[#F5B7C4] bg-[#FBE9ED] px-4 py-3 text-sm font-bold text-[#8A0D29]"
+          className="rounded-xl border border-[#F5B7C4] bg-[#FBE9ED] px-4 py-3 text-sm font-semibold text-[#8A0D29]"
         >
           {mensagemErro}
         </div>
@@ -208,7 +208,7 @@ export function PainelAcesso({
       {mensagemSucesso && (
         <div
           role="status"
-          className="rounded-xl border border-[#A3DFC0] bg-[#E5F5EC] px-4 py-3 text-sm font-bold text-[#00522B]"
+          className="rounded-xl border border-[#A3DFC0] bg-[#E5F5EC] px-4 py-3 text-sm font-semibold text-[#00522B]"
         >
           {mensagemSucesso}
         </div>
@@ -225,25 +225,25 @@ export function PainelAcesso({
             return (
               <article
                 key={conta.id}
-                className="flex flex-col justify-between rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-xs transition-all hover:border-[#CBD5E1]"
+                className="flex flex-col justify-between rounded-xl border border-line bg-white p-5 transition-colors hover:border-input"
               >
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="rounded-full bg-[#E6F2FD] px-3 py-0.5 text-xs font-bold text-[#002664]">
+                    <span className="rounded-full bg-soft px-3 py-0.5 text-xs font-semibold text-ink">
                       {conta.rotuloPerfil}
                     </span>
                     {ativo && (
-                      <span className="rounded-full border border-[#A3DFC0] bg-[#E5F5EC] px-2.5 py-0.5 text-xs font-bold text-[#00522B]">
+                      <span className="rounded-full border border-[#A3DFC0] bg-[#E5F5EC] px-2.5 py-0.5 text-xs font-semibold text-[#00522B]">
                         ✓ Sessão atual
                       </span>
                     )}
                   </div>
-                  <h3 className="mt-3 text-lg font-extrabold text-[#002664]">{conta.nome}</h3>
-                  <p className="font-mono text-xs text-[#495054]">{conta.email}</p>
-                  <p className="mt-2 text-xs leading-relaxed text-[#495054]">
+                  <h3 className="mt-3 text-lg font-semibold text-ink">{conta.nome}</h3>
+                  <p className="font-sans text-xs text-muted">{conta.email}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-muted">
                     {conta.descricaoCurta}
                   </p>
-                  <p className="mt-2 text-xs font-semibold text-[#004047]">
+                  <p className="mt-2 text-xs font-semibold text-ink">
                     Papéis: {conta.papeis.map((p) => ROTULO_PAPEL[p]).join(" + ")}
                   </p>
                 </div>
@@ -253,7 +253,7 @@ export function PainelAcesso({
                     type="button"
                     disabled={isPending}
                     onClick={() => entrarComContaDemo(conta.id)}
-                    className="w-full rounded-xl bg-[#002664] px-4 py-2.5 text-xs font-extrabold text-white transition-colors hover:bg-[#146CFD]"
+                    className="w-full rounded-xl bg-ink px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-brand"
                   >
                     Entrar como {conta.nome} →
                   </button>
@@ -267,18 +267,18 @@ export function PainelAcesso({
       {abaAtiva === "cadastro" && (
         <section
           aria-labelledby="titulo-cadastro-paciente"
-          className="max-w-xl rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-xs"
+          className="max-w-xl rounded-xl border border-line bg-white p-6"
         >
-          <h2 id="titulo-cadastro-paciente" className="text-lg font-extrabold text-[#002664]">
+          <h2 id="titulo-cadastro-paciente" className="text-lg font-semibold text-ink">
             Criar conta de Paciente
           </h2>
-          <p className="mt-1 text-xs text-[#495054]">
+          <p className="mt-1 text-xs text-muted">
             Coletamos apenas nome, e-mail e telefone para agendamento (LGPD).
           </p>
 
           <form onSubmit={submeterCadastro} className="mt-4 space-y-4" noValidate>
             <div>
-              <label htmlFor="cadastro-nome" className="block text-xs font-bold text-[#495054]">
+              <label htmlFor="cadastro-nome" className="block text-xs font-semibold text-muted">
                 Nome completo *
               </label>
               <input
@@ -289,12 +289,12 @@ export function PainelAcesso({
                 value={nomeCadastro}
                 onChange={(e) => setNomeCadastro(e.target.value)}
                 placeholder="Ex.: Ana Paula Souza"
-                className="mt-1 w-full rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] px-3.5 py-2.5 text-sm text-[#22272B] focus:border-[#146CFD] focus:bg-white focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-input bg-canvas px-3.5 py-2.5 text-sm text-ink focus:border-brand focus:bg-white focus:outline-none"
               />
             </div>
 
             <div>
-              <label htmlFor="cadastro-email" className="block text-xs font-bold text-[#495054]">
+              <label htmlFor="cadastro-email" className="block text-xs font-semibold text-muted">
                 E-mail *
               </label>
               <input
@@ -305,12 +305,12 @@ export function PainelAcesso({
                 value={emailCadastro}
                 onChange={(e) => setEmailCadastro(e.target.value)}
                 placeholder="ana.souza@exemplo.invalid"
-                className="mt-1 w-full rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] px-3.5 py-2.5 text-sm text-[#22272B] focus:border-[#146CFD] focus:bg-white focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-input bg-canvas px-3.5 py-2.5 text-sm text-ink focus:border-brand focus:bg-white focus:outline-none"
               />
             </div>
 
             <div>
-              <label htmlFor="cadastro-telefone" className="block text-xs font-bold text-[#495054]">
+              <label htmlFor="cadastro-telefone" className="block text-xs font-semibold text-muted">
                 Telefone *
               </label>
               <input
@@ -321,29 +321,29 @@ export function PainelAcesso({
                 value={telefoneCadastro}
                 onChange={(e) => setTelefoneCadastro(e.target.value)}
                 placeholder="(11) 90000-1234"
-                className="mt-1 w-full rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] px-3.5 py-2.5 text-sm text-[#22272B] focus:border-[#146CFD] focus:bg-white focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-input bg-canvas px-3.5 py-2.5 text-sm text-ink focus:border-brand focus:bg-white focus:outline-none"
               />
             </div>
 
-            <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3.5">
+            <div className="rounded-xl border border-line bg-canvas p-3.5">
               <label
                 htmlFor="cadastro-termos"
-                className="flex cursor-pointer items-start gap-2.5 text-xs text-[#22272B]"
+                className="flex cursor-pointer items-start gap-2.5 text-xs text-ink"
               >
                 <input
                   id="cadastro-termos"
                   type="checkbox"
                   checked={aceitouTermos}
                   onChange={(e) => setAceitouTermos(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[#002664]"
+                  className="mt-0.5 h-4 w-4 accent-ink"
                 />
                 <span>
                   Li e aceito os{" "}
-                  <Link href="/termos" className="font-bold text-[#002664] underline">
+                  <Link href="/termos" className="font-semibold text-ink underline">
                     Termos de Serviço
                   </Link>{" "}
                   ({versaoTermos}) e a{" "}
-                  <Link href="/privacidade" className="font-bold text-[#002664] underline">
+                  <Link href="/privacidade" className="font-semibold text-ink underline">
                     Política de Privacidade
                   </Link>
                   .
@@ -354,7 +354,7 @@ export function PainelAcesso({
             <button
               type="submit"
               disabled={isPending}
-              className="w-full rounded-xl bg-[#002664] px-4 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-[#146CFD]"
+              className="w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand"
             >
               {isPending ? "Criando..." : "Criar conta de paciente"}
             </button>
@@ -365,18 +365,18 @@ export function PainelAcesso({
       {abaAtiva === "login" && (
         <section
           aria-labelledby="titulo-login"
-          className="max-w-xl rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-xs"
+          className="max-w-xl rounded-xl border border-line bg-white p-6"
         >
-          <h2 id="titulo-login" className="text-lg font-extrabold text-[#002664]">
+          <h2 id="titulo-login" className="text-lg font-semibold text-ink">
             Entrar com e-mail
           </h2>
-          <p className="mt-1 text-xs text-[#495054]">
+          <p className="mt-1 text-xs text-muted">
             Use o e-mail de uma conta demonstrativa ou cadastrada nesta sessão.
           </p>
 
           <form onSubmit={submeterLogin} className="mt-4 space-y-4">
             <div>
-              <label htmlFor="login-email" className="block text-xs font-bold text-[#495054]">
+              <label htmlFor="login-email" className="block text-xs font-semibold text-muted">
                 E-mail *
               </label>
               <input
@@ -385,12 +385,12 @@ export function PainelAcesso({
                 required
                 value={emailLogin}
                 onChange={(e) => setEmailLogin(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] px-3.5 py-2.5 text-sm text-[#22272B] focus:border-[#146CFD] focus:bg-white focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-input bg-canvas px-3.5 py-2.5 text-sm text-ink focus:border-brand focus:bg-white focus:outline-none"
               />
             </div>
 
             <div>
-              <label htmlFor="login-senha" className="block text-xs font-bold text-[#495054]">
+              <label htmlFor="login-senha" className="block text-xs font-semibold text-muted">
                 Senha demonstrativa *
               </label>
               <input
@@ -399,14 +399,14 @@ export function PainelAcesso({
                 required
                 value={senhaLogin}
                 onChange={(e) => setSenhaLogin(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] px-3.5 py-2.5 text-sm text-[#22272B] focus:border-[#146CFD] focus:bg-white focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-input bg-canvas px-3.5 py-2.5 text-sm text-ink focus:border-brand focus:bg-white focus:outline-none"
               />
             </div>
 
             <button
               type="submit"
               disabled={isPending}
-              className="w-full rounded-xl bg-[#002664] px-4 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-[#146CFD]"
+              className="w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand"
             >
               {isPending ? "Verificando..." : "Entrar"}
             </button>
@@ -417,19 +417,19 @@ export function PainelAcesso({
       {abaAtiva === "recuperacao" && (
         <section
           aria-labelledby="titulo-recuperacao"
-          className="max-w-xl rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-xs"
+          className="max-w-xl rounded-xl border border-line bg-white p-6"
         >
-          <h2 id="titulo-recuperacao" className="text-lg font-extrabold text-[#002664]">
+          <h2 id="titulo-recuperacao" className="text-lg font-semibold text-ink">
             Recuperar acesso
           </h2>
-          <p className="mt-1 text-xs text-[#495054]">
+          <p className="mt-1 text-xs text-muted">
             Na demonstração nenhum e-mail real é disparado; use a aba Contas Demo para alternar em 1
             clique.
           </p>
 
           <form onSubmit={submeterRecuperacao} className="mt-4 space-y-4">
             <div>
-              <label htmlFor="recuperacao-email" className="block text-xs font-bold text-[#495054]">
+              <label htmlFor="recuperacao-email" className="block text-xs font-semibold text-muted">
                 E-mail da conta *
               </label>
               <input
@@ -439,13 +439,13 @@ export function PainelAcesso({
                 value={emailRecuperacao}
                 onChange={(e) => setEmailRecuperacao(e.target.value)}
                 placeholder="mariana.costa@demo.exemplo.invalid"
-                className="mt-1 w-full rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] px-3.5 py-2.5 text-sm text-[#22272B] focus:border-[#146CFD] focus:bg-white focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-input bg-canvas px-3.5 py-2.5 text-sm text-ink focus:border-brand focus:bg-white focus:outline-none"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-[#002664] px-4 py-2.5 text-sm font-extrabold text-white transition-colors hover:bg-[#146CFD]"
+              className="w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand"
             >
               Simular recuperação
             </button>

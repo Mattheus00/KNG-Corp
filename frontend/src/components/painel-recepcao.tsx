@@ -13,6 +13,7 @@ import {
   acaoRemarcarConsulta,
 } from "@/app/acoes"
 import { BadgePresenca, BadgeSituacao } from "@/components/badge-situacao"
+import { CalendarioAgenda, diasDaGrade } from "@/components/calendario-agenda"
 import {
   formatarDataCurtaClinica,
   formatarDataHoraClinica,
@@ -104,6 +105,8 @@ export function PainelRecepcao({
 
   const [modoVisao, setModoVisao] = useState<"semanal" | "diaria">("semanal")
   const [filtroDataISO, setFiltroDataISO] = useState(dataHojeISO)
+  const [ancoraSemanaISO, setAncoraSemanaISO] = useState(dataHojeISO)
+  const [selecionadoId, setSelecionadoId] = useState<string | null>(null)
   const [filtroProfissionalId, setFiltroProfissionalId] = useState<string>("todos")
   const [filtroSituacao, setFiltroSituacao] = useState<string>("todas")
 
@@ -245,6 +248,25 @@ export function PainelRecepcao({
     })
   }
 
+  function moverPeloCalendario(agendamentoId: string, inicioISO: string) {
+    setErro(null)
+    setSucesso(null)
+    return new Promise<{ ok: boolean }>((resolver) => {
+      startTransition(async () => {
+        const res = await acaoRemarcarConsulta({ agendamentoId, inicio: inicioISO })
+        if (!res.ok) {
+          setErro(res.mensagem)
+          resolver({ ok: false })
+          return
+        }
+        setSucesso(res.mensagem)
+        setSelecionadoId(agendamentoId)
+        router.refresh()
+        resolver({ ok: true })
+      })
+    })
+  }
+
   function submeterRemarcacao(agendamentoId: string) {
     setErro(null)
     setSucesso(null)
@@ -323,8 +345,10 @@ export function PainelRecepcao({
     (a) => a.situacao === "agendado" && !a.presencaConfirmada,
   ).length
 
+  const ancoraGrade = modoVisao === "diaria" ? filtroDataISO : ancoraSemanaISO
+  const diasVisiveis = new Set(diasDaGrade(modoVisao, ancoraGrade))
   const agendamentosFiltrados = agendamentos.filter((a) => {
-    if (modoVisao === "diaria" && a.dataCivilISO !== filtroDataISO) return false
+    if (!diasVisiveis.has(a.dataCivilISO)) return false
     if (filtroProfissionalId !== "todos" && a.profissionalId !== filtroProfissionalId) return false
     if (filtroSituacao === "pendente_confirmacao") {
       return a.situacao === "agendado" && !a.presencaConfirmada
@@ -345,31 +369,31 @@ export function PainelRecepcao({
 
   return (
     <div className="space-y-6">
-      {/* Compact Header + Segmented Pill Tabs */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="module-heading">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#002664]">
+          <p className="eyebrow">Rotina da clínica</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">
             Recepção
           </h1>
-          <p className="text-xs text-[#495054]">
+          <p className="text-xs text-muted">
             Confirme presenças, registre chegadas e gerencie encaixes.
           </p>
         </div>
 
         <div
-          role="tablist"
+          role="group"
           aria-label="Módulos da Recepção"
-          className="inline-flex flex-wrap gap-1 rounded-xl border border-[#DDE2E8] bg-white p-1"
+          className="module-tabs"
         >
           <button
             type="button"
-            role="tab"
-            aria-selected={abaAtiva === "agenda"}
+
+            aria-pressed={abaAtiva === "agenda"}
             onClick={() => setAbaAtiva("agenda")}
-            className={`min-h-10 rounded-lg px-4 py-1.5 text-xs font-bold transition-all sm:text-sm ${
+            className={`min-h-10 rounded-lg px-4 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
               abaAtiva === "agenda"
-                ? "bg-[#002664] text-white"
-                : "text-[#495054] hover:bg-[#F2F4F7] hover:text-[#002664]"
+                ? "bg-ink text-white"
+                : "text-muted hover:bg-canvas hover:text-ink"
             }`}
           >
             Agenda ({agendamentos.length})
@@ -377,13 +401,13 @@ export function PainelRecepcao({
 
           <button
             type="button"
-            role="tab"
-            aria-selected={abaAtiva === "novo_agendamento"}
+
+            aria-pressed={abaAtiva === "novo_agendamento"}
             onClick={() => setAbaAtiva("novo_agendamento")}
-            className={`min-h-10 rounded-lg px-4 py-1.5 text-xs font-bold transition-all sm:text-sm ${
+            className={`min-h-10 rounded-lg px-4 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
               abaAtiva === "novo_agendamento"
-                ? "bg-[#002664] text-white"
-                : "text-[#495054] hover:bg-[#F2F4F7] hover:text-[#002664]"
+                ? "bg-ink text-white"
+                : "text-muted hover:bg-canvas hover:text-ink"
             }`}
           >
             + Novo Agendamento
@@ -391,13 +415,13 @@ export function PainelRecepcao({
 
           <button
             type="button"
-            role="tab"
-            aria-selected={abaAtiva === "pacientes"}
+
+            aria-pressed={abaAtiva === "pacientes"}
             onClick={() => setAbaAtiva("pacientes")}
-            className={`min-h-10 rounded-lg px-4 py-1.5 text-xs font-bold transition-all sm:text-sm ${
+            className={`min-h-10 rounded-lg px-4 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
               abaAtiva === "pacientes"
-                ? "bg-[#002664] text-white"
-                : "text-[#495054] hover:bg-[#F2F4F7] hover:text-[#002664]"
+                ? "bg-ink text-white"
+                : "text-muted hover:bg-canvas hover:text-ink"
             }`}
           >
             Pacientes ({pacientes.length})
@@ -433,14 +457,14 @@ export function PainelRecepcao({
                 setModoVisao("semanal")
                 setFiltroSituacao("todas")
               }}
-              className={`rounded-2xl border p-4 text-left transition-all ${
+              className={`rounded-xl border p-4 text-left transition-colors ${
                 filtroSituacao === "todas"
-                  ? "border-2 border-[#002664] bg-white shadow-xs"
-                  : "border-[#DDE2E8] bg-white hover:border-[#002664]"
+                  ? "border-2 border-ink bg-white "
+                  : "border-line bg-white hover:border-ink"
               }`}
             >
-              <span className="block text-xs font-semibold text-[#495054]">Todas</span>
-              <span className="mt-1 block text-2xl font-extrabold text-[#002664] tabular-nums">
+              <span className="block text-xs font-semibold text-muted">Todas</span>
+              <span className="mt-1 block text-2xl font-semibold text-ink tabular-nums">
                 {agendamentos.length}
               </span>
             </button>
@@ -451,14 +475,14 @@ export function PainelRecepcao({
                 setModoVisao("semanal")
                 setFiltroSituacao("chegou")
               }}
-              className={`rounded-2xl border p-4 text-left transition-all ${
+              className={`rounded-xl border p-4 text-left transition-colors ${
                 filtroSituacao === "chegou"
-                  ? "border-2 border-[#7A3900] bg-[#FFF3E5]/50 shadow-xs"
-                  : "border-[#DDE2E8] bg-white hover:border-[#7A3900]"
+                  ? "border-2 border-[#7A3900] bg-[#FFF3E5]/50 "
+                  : "border-line bg-white hover:border-[#7A3900]"
               }`}
             >
               <span className="block text-xs font-semibold text-[#7A3900]">Na recepção</span>
-              <span className="mt-1 block text-2xl font-extrabold text-[#7A3900] tabular-nums">
+              <span className="mt-1 block text-2xl font-semibold text-[#7A3900] tabular-nums">
                 {qtdChegou}
               </span>
             </button>
@@ -469,14 +493,14 @@ export function PainelRecepcao({
                 setModoVisao("semanal")
                 setFiltroSituacao("pendente_confirmacao")
               }}
-              className={`rounded-2xl border p-4 text-left transition-all ${
+              className={`rounded-xl border p-4 text-left transition-colors ${
                 filtroSituacao === "pendente_confirmacao"
-                  ? "border-2 border-[#146CFD] bg-[#E6F2FD]/50 shadow-xs"
-                  : "border-[#DDE2E8] bg-white hover:border-[#146CFD]"
+                  ? "border-2 border-brand bg-soft/50 "
+                  : "border-line bg-white hover:border-brand"
               }`}
             >
-              <span className="block text-xs font-semibold text-[#146CFD]">Sem confirmação</span>
-              <span className="mt-1 block text-2xl font-extrabold text-[#002664] tabular-nums">
+              <span className="block text-xs font-semibold text-brand">Sem confirmação</span>
+              <span className="mt-1 block text-2xl font-semibold text-ink tabular-nums">
                 {qtdSemConfirmacao}
               </span>
             </button>
@@ -487,46 +511,46 @@ export function PainelRecepcao({
                 setModoVisao("semanal")
                 setFiltroSituacao("agendado")
               }}
-              className={`rounded-2xl border p-4 text-left transition-all ${
+              className={`rounded-xl border p-4 text-left transition-colors ${
                 filtroSituacao === "agendado"
-                  ? "border-2 border-[#004047] bg-[#E3F3F4]/50 shadow-xs"
-                  : "border-[#DDE2E8] bg-white hover:border-[#004047]"
+                  ? "border-2 border-ink bg-soft/50 "
+                  : "border-line bg-white hover:border-ink"
               }`}
             >
-              <span className="block text-xs font-semibold text-[#004047]">Aguardando chegada</span>
-              <span className="mt-1 block text-2xl font-extrabold text-[#004047] tabular-nums">
+              <span className="block text-xs font-semibold text-ink">Aguardando chegada</span>
+              <span className="mt-1 block text-2xl font-semibold text-ink tabular-nums">
                 {qtdAgendados}
               </span>
             </button>
           </div>
 
           {/* Slim Single-Row Filter Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#DDE2E8] bg-white p-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-white p-3.5">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex rounded-xl bg-[#F2F4F7] p-1">
+              <div className="inline-flex rounded-xl bg-canvas p-1">
                 <button
                   type="button"
                   aria-pressed={modoVisao === "semanal"}
                   onClick={() => setModoVisao("semanal")}
-                  className={`min-h-8 rounded-lg px-3 py-1 text-xs font-bold ${
+                  className={`min-h-8 rounded-lg px-3 py-1 text-xs font-semibold ${
                     modoVisao === "semanal"
-                      ? "bg-[#002664] text-white"
-                      : "text-[#495054]"
+                      ? "bg-ink text-white"
+                      : "text-muted"
                   }`}
                 >
-                  Geral
+                  Semana
                 </button>
                 <button
                   type="button"
                   aria-pressed={modoVisao === "diaria"}
                   onClick={() => setModoVisao("diaria")}
-                  className={`min-h-8 rounded-lg px-3 py-1 text-xs font-bold ${
+                  className={`min-h-8 rounded-lg px-3 py-1 text-xs font-semibold ${
                     modoVisao === "diaria"
-                      ? "bg-[#002664] text-white"
-                      : "text-[#495054]"
+                      ? "bg-ink text-white"
+                      : "text-muted"
                   }`}
                 >
-                  Por Dia
+                  Dia
                 </button>
               </div>
 
@@ -537,7 +561,7 @@ export function PainelRecepcao({
                   type="date"
                   value={filtroDataISO}
                   onChange={(e) => setFiltroDataISO(e.target.value)}
-                  className="min-h-9 rounded-xl border border-[#CDD3D9] bg-white px-3 py-1 text-xs font-bold text-[#22272B]"
+                  className="min-h-9 rounded-xl border border-input bg-white px-3 py-1 text-xs font-semibold text-ink"
                 />
               )}
 
@@ -546,7 +570,7 @@ export function PainelRecepcao({
                 aria-label="Filtrar por especialista"
                 value={filtroProfissionalId}
                 onChange={(e) => setFiltroProfissionalId(e.target.value)}
-                className="min-h-9 rounded-xl border border-[#CDD3D9] bg-white px-3 py-1 text-xs font-bold text-[#22272B]"
+                className="min-h-9 rounded-xl border border-input bg-white px-3 py-1 text-xs font-semibold text-ink"
               >
                 <option value="todos">Todos os especialistas</option>
                 {profissionais.map((p) => (
@@ -561,7 +585,7 @@ export function PainelRecepcao({
                 aria-label="Filtrar por situação"
                 value={filtroSituacao}
                 onChange={(e) => setFiltroSituacao(e.target.value)}
-                className="min-h-9 rounded-xl border border-[#CDD3D9] bg-white px-3 py-1 text-xs font-bold text-[#22272B]"
+                className="min-h-9 rounded-xl border border-input bg-white px-3 py-1 text-xs font-semibold text-ink"
               >
                 <option value="todas">Todas as situações</option>
                 <option value="pendente_confirmacao">Sem confirmação</option>
@@ -574,14 +598,44 @@ export function PainelRecepcao({
               </select>
             </div>
 
-            <span className="text-xs font-semibold text-[#495054] tabular-nums">
+            <span className="text-xs font-semibold text-muted tabular-nums">
               {agendamentosFiltrados.length} consulta(s)
             </span>
           </div>
 
+          <CalendarioAgenda
+            modo={modoVisao}
+            ancoraISO={ancoraGrade}
+            dataHojeISO={dataHojeISO}
+            movendo={isPending}
+            selecionadoId={selecionadoId}
+            eventos={agendamentosFiltrados.map((consulta) => ({
+              id: consulta.id,
+              titulo: consulta.pacienteNome,
+              detalhe: consulta.profissionalNome,
+              profissionalId: consulta.profissionalId,
+              inicioISO: consulta.inicioISO,
+              fimISO: consulta.fimISO,
+              situacao: consulta.situacao,
+              podeArrastar: consulta.situacao === "agendado",
+            }))}
+            onMudarAncora={(iso) => {
+              if (modoVisao === "diaria") setFiltroDataISO(iso)
+              else setAncoraSemanaISO(iso)
+            }}
+            onSelecionar={(id) => {
+              setSelecionadoId(id)
+              document.getElementById(`consulta-${id}`)?.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+              })
+            }}
+            onMover={moverPeloCalendario}
+          />
+
           {/* Appointment Cards */}
           {agendamentosFiltrados.length === 0 ? (
-            <div className="rounded-2xl border border-[#DDE2E8] bg-white p-6 text-sm text-[#495054]">
+            <div className="rounded-xl border border-line bg-white p-6 text-sm text-muted">
               Nenhuma consulta encontrada para este filtro.{" "}
               <button
                 type="button"
@@ -590,7 +644,7 @@ export function PainelRecepcao({
                   setFiltroProfissionalId("todos")
                   setFiltroSituacao("todas")
                 }}
-                className="font-bold text-[#146CFD] underline"
+                className="font-semibold text-brand underline"
               >
                 Limpar filtros
               </button>
@@ -614,12 +668,17 @@ export function PainelRecepcao({
                 return (
                   <article
                     key={consulta.id}
-                    className="rounded-2xl border border-[#DDE2E8] bg-white p-4 sm:p-5"
+                    id={`consulta-${consulta.id}`}
+                    className={`rounded-xl border bg-white p-4 sm:p-5 ${
+                      selecionadoId === consulta.id
+                        ? "border-brand ring-2 ring-brand"
+                        : "border-line"
+                    }`}
                   >
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-lg bg-[#002664] px-2.5 py-0.5 text-xs font-bold text-white tabular-nums">
+                          <span className="rounded-lg bg-ink px-2.5 py-0.5 text-xs font-semibold text-white tabular-nums">
                             {formatarDataCurtaClinica(inicio)} •{" "}
                             {formatarIntervaloHorarioClinica(inicio, fim)}
                           </span>
@@ -627,16 +686,16 @@ export function PainelRecepcao({
                           <BadgePresenca confirmada={consulta.presencaConfirmada} />
                         </div>
 
-                        <h3 className="pt-1 text-base font-extrabold text-[#002664]">
+                        <h3 className="pt-1 text-base font-semibold text-ink">
                           {consulta.pacienteNome}{" "}
-                          <span className="text-xs font-medium text-[#495054]">
+                          <span className="text-xs font-medium text-muted">
                             • {consulta.pacienteTelefone}
                           </span>
                         </h3>
 
-                        <p className="text-xs text-[#495054]">
+                        <p className="text-xs text-muted">
                           <strong>{consulta.servicoNome}</strong> ({consulta.duracaoMinutos}m) com{" "}
-                          <strong className="text-[#004047]">{consulta.profissionalNome}</strong>
+                          <strong className="text-ink">{consulta.profissionalNome}</strong>
                         </p>
 
                         {consulta.motivoCancelamento && (
@@ -652,7 +711,7 @@ export function PainelRecepcao({
                             type="button"
                             disabled={isPending}
                             onClick={() => confirmarPresenca(consulta.id)}
-                            className="min-h-10 rounded-xl bg-[#146CFD] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#002664]"
+                            className="min-h-10 rounded-xl bg-brand px-3.5 py-2 text-xs font-semibold text-white hover:bg-ink"
                           >
                             ✓ Confirmar
                           </button>
@@ -663,7 +722,7 @@ export function PainelRecepcao({
                             type="button"
                             disabled={isPending}
                             onClick={() => mudarSituacao(consulta.id, "chegou")}
-                            className="min-h-10 rounded-xl bg-[#006938] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#00522B]"
+                            className="min-h-10 rounded-xl bg-[#006938] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#00522B]"
                           >
                             Chegou
                           </button>
@@ -674,7 +733,7 @@ export function PainelRecepcao({
                             type="button"
                             disabled={isPending}
                             onClick={() => abrirRemarcacao(consulta)}
-                            className="min-h-10 rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-xs font-semibold text-[#002664] hover:bg-[#F2F4F7]"
+                            className="min-h-10 rounded-xl border border-input bg-white px-3 py-2 text-xs font-semibold text-ink hover:bg-canvas"
                           >
                             Remarcar
                           </button>
@@ -712,7 +771,7 @@ export function PainelRecepcao({
                           onClick={() =>
                             setHistoricoAbertoId(historicoAberto ? null : consulta.id)
                           }
-                          className="min-h-10 rounded-xl bg-[#F2F4F7] px-3 py-2 text-xs font-semibold text-[#495054] hover:bg-[#DDE2E8]"
+                          className="min-h-10 rounded-xl bg-canvas px-3 py-2 text-xs font-semibold text-muted hover:bg-line"
                         >
                           Histórico ({consulta.historico.length})
                         </button>
@@ -720,12 +779,12 @@ export function PainelRecepcao({
                     </div>
 
                     {remarcandoId === consulta.id && (
-                      <div className="mt-3 rounded-xl border border-[#B8D8FA] bg-[#E6F2FD]/50 p-4">
+                      <div className="mt-3 rounded-xl border border-input bg-soft/50 p-4">
                         <div className="grid gap-3 sm:grid-cols-2">
                           <div>
                             <label
                               htmlFor={`rec-remarcar-data-${consulta.id}`}
-                              className="block text-xs font-bold text-[#002664]"
+                              className="block text-xs font-semibold text-ink"
                             >
                               Nova data
                             </label>
@@ -734,18 +793,18 @@ export function PainelRecepcao({
                               type="date"
                               value={dataRemarcacaoISO}
                               onChange={(e) => alterarDataRemarcacao(consulta, e.target.value)}
-                              className="mt-1 min-h-10 w-full rounded-lg border border-[#CDD3D9] bg-white px-3 py-1.5 text-xs font-bold text-[#22272B]"
+                              className="mt-1 min-h-10 w-full rounded-lg border border-input bg-white px-3 py-1.5 text-xs font-semibold text-ink"
                             />
                           </div>
                           <div>
                             <label
                               htmlFor={`rec-remarcar-hora-${consulta.id}`}
-                              className="block text-xs font-bold text-[#002664]"
+                              className="block text-xs font-semibold text-ink"
                             >
                               Novo horário
                             </label>
                             {horariosRemarcacaoISO.length === 0 ? (
-                              <p className="mt-2 text-xs font-bold text-[#8A0D29]">
+                              <p className="mt-2 text-xs font-semibold text-[#8A0D29]">
                                 Sem horários livres nesta data.
                               </p>
                             ) : (
@@ -753,7 +812,7 @@ export function PainelRecepcao({
                                 id={`rec-remarcar-hora-${consulta.id}`}
                                 value={horarioNovoRemarcacaoISO}
                                 onChange={(e) => setHorarioNovoRemarcacaoISO(e.target.value)}
-                                className="mt-1 min-h-10 w-full rounded-lg border border-[#CDD3D9] bg-white px-3 py-1.5 text-xs font-bold text-[#22272B]"
+                                className="mt-1 min-h-10 w-full rounded-lg border border-input bg-white px-3 py-1.5 text-xs font-semibold text-ink"
                               >
                                 {horariosRemarcacaoISO.map((iso) => (
                                   <option key={iso} value={iso}>
@@ -769,14 +828,14 @@ export function PainelRecepcao({
                             type="button"
                             disabled={isPending || !horarioNovoRemarcacaoISO}
                             onClick={() => submeterRemarcacao(consulta.id)}
-                            className="min-h-9 rounded-lg bg-[#002664] px-4 py-1.5 text-xs font-bold text-white"
+                            className="min-h-9 rounded-lg bg-ink px-4 py-1.5 text-xs font-semibold text-white"
                           >
                             Salvar
                           </button>
                           <button
                             type="button"
                             onClick={() => setRemarcandoId(null)}
-                            className="min-h-9 rounded-lg border border-[#CDD3D9] bg-white px-3 py-1.5 text-xs font-semibold text-[#495054]"
+                            className="min-h-9 rounded-lg border border-input bg-white px-3 py-1.5 text-xs font-semibold text-muted"
                           >
                             Fechar
                           </button>
@@ -788,7 +847,7 @@ export function PainelRecepcao({
                       <div className="mt-3 rounded-xl border border-[#F1B2C0] bg-[#FBE9ED]/60 p-4">
                         <label
                           htmlFor={`rec-cancelar-motivo-${consulta.id}`}
-                          className="block text-xs font-bold text-[#8A0D29]"
+                          className="block text-xs font-semibold text-[#8A0D29]"
                         >
                           Motivo do cancelamento
                         </label>
@@ -799,21 +858,21 @@ export function PainelRecepcao({
                           value={motivoCancelamento}
                           onChange={(e) => setMotivoCancelamento(e.target.value)}
                           placeholder="Ex.: Solicitação do paciente por telefone"
-                          className="mt-1 min-h-10 w-full rounded-lg border border-[#F1B2C0] bg-white px-3 py-1.5 text-xs text-[#22272B]"
+                          className="mt-1 min-h-10 w-full rounded-lg border border-[#F1B2C0] bg-white px-3 py-1.5 text-xs text-ink"
                         />
                         <div className="mt-3 flex gap-2">
                           <button
                             type="button"
                             disabled={isPending || motivoCancelamento.trim().length === 0}
                             onClick={() => submeterCancelamento(consulta.id)}
-                            className="min-h-9 rounded-lg bg-[#D7153A] px-4 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+                            className="min-h-9 rounded-lg bg-[#D7153A] px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
                           >
                             Confirmar
                           </button>
                           <button
                             type="button"
                             onClick={() => setCancelandoId(null)}
-                            className="min-h-9 rounded-lg border border-[#CDD3D9] bg-white px-3 py-1.5 text-xs font-semibold text-[#495054]"
+                            className="min-h-9 rounded-lg border border-input bg-white px-3 py-1.5 text-xs font-semibold text-muted"
                           >
                             Fechar
                           </button>
@@ -822,8 +881,8 @@ export function PainelRecepcao({
                     )}
 
                     {historicoAberto && (
-                      <div className="mt-3 rounded-xl bg-[#F4F6F9] p-3.5">
-                        <ol className="space-y-1.5 text-xs text-[#22272B]">
+                      <div className="mt-3 rounded-xl bg-canvas p-3.5">
+                        <ol className="space-y-1.5 text-xs text-ink">
                           {consulta.historico.map((h, i) => (
                             <li
                               key={`${h.momentoISO}-${i}`}
@@ -837,7 +896,7 @@ export function PainelRecepcao({
                                 {METADADOS_SITUACAO[h.situacaoNova].rotulo}
                                 {h.motivo ? ` (${h.motivo})` : ""}
                               </span>
-                              <span className="text-[11px] text-[#495054] tabular-nums">
+                              <span className="text-[11px] text-muted tabular-nums">
                                 {formatarDataHoraClinica(new Date(h.momentoISO))}
                               </span>
                             </li>
@@ -856,25 +915,25 @@ export function PainelRecepcao({
       {abaAtiva === "novo_agendamento" && (
         <section
           aria-labelledby="titulo-agendamento-manual"
-          className="max-w-xl rounded-2xl border border-[#DDE2E8] bg-white p-6"
+          className="max-w-xl rounded-xl border border-line bg-white p-6"
         >
-          <h2 id="titulo-agendamento-manual" className="text-base font-extrabold text-[#002664]">
+          <h2 id="titulo-agendamento-manual" className="text-base font-semibold text-ink">
             Novo Agendamento Manual
           </h2>
-          <p className="mt-1 text-xs text-[#495054]">
+          <p className="mt-1 text-xs text-muted">
             Inclui avaliações e procedimentos exclusivos da recepção (restaurações e retornos).
           </p>
 
           <form onSubmit={submeterAgendamentoManual} className="mt-4 space-y-4">
             <div>
-              <label htmlFor="manual-paciente" className="block text-xs font-bold text-[#22272B]">
+              <label htmlFor="manual-paciente" className="block text-xs font-semibold text-ink">
                 Paciente
               </label>
               <select
                 id="manual-paciente"
                 value={pacienteReservaId}
                 onChange={(e) => setPacienteReservaId(e.target.value)}
-                className="mt-1 min-h-10 w-full rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-sm text-[#22272B]"
+                className="mt-1 min-h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink"
               >
                 {pacientes.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -885,7 +944,7 @@ export function PainelRecepcao({
             </div>
 
             <div>
-              <label htmlFor="manual-servico" className="block text-xs font-bold text-[#22272B]">
+              <label htmlFor="manual-servico" className="block text-xs font-semibold text-ink">
                 Procedimento
               </label>
               <select
@@ -902,7 +961,7 @@ export function PainelRecepcao({
                     setProfissionalReservaId(hab?.id ?? "")
                   }
                 }}
-                className="mt-1 min-h-10 w-full rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-sm text-[#22272B]"
+                className="mt-1 min-h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink"
               >
                 {servicos.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -916,7 +975,7 @@ export function PainelRecepcao({
               <div>
                 <label
                   htmlFor="manual-profissional"
-                  className="block text-xs font-bold text-[#22272B]"
+                  className="block text-xs font-semibold text-ink"
                 >
                   Especialista
                 </label>
@@ -924,7 +983,7 @@ export function PainelRecepcao({
                   id="manual-profissional"
                   value={profissionalReservaId}
                   onChange={(e) => setProfissionalReservaId(e.target.value)}
-                  className="mt-1 min-h-10 w-full rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-sm text-[#22272B]"
+                  className="mt-1 min-h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink"
                 >
                   {profissionaisHabilitados.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -935,7 +994,7 @@ export function PainelRecepcao({
               </div>
 
               <div>
-                <label htmlFor="manual-data" className="block text-xs font-bold text-[#22272B]">
+                <label htmlFor="manual-data" className="block text-xs font-semibold text-ink">
                   Data
                 </label>
                 <input
@@ -943,19 +1002,19 @@ export function PainelRecepcao({
                   type="date"
                   value={dataReservaISO}
                   onChange={(e) => setDataReservaISO(e.target.value)}
-                  className="mt-1 min-h-10 w-full rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-sm text-[#22272B]"
+                  className="mt-1 min-h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="manual-horario" className="block text-xs font-bold text-[#22272B]">
+              <label htmlFor="manual-horario" className="block text-xs font-semibold text-ink">
                 Horário livre
               </label>
               {carregandoHorariosReserva ? (
-                <p className="mt-2 text-xs text-[#495054]">Consultando...</p>
+                <p className="mt-2 text-xs text-muted">Consultando...</p>
               ) : horariosReservaISO.length === 0 ? (
-                <p className="mt-2 rounded-xl bg-[#FFF3E5] p-3 text-xs font-bold text-[#7A3900]">
+                <p className="mt-2 rounded-xl bg-[#FFF3E5] p-3 text-xs font-semibold text-[#7A3900]">
                   Sem horários livres nesta data.
                 </p>
               ) : (
@@ -963,7 +1022,7 @@ export function PainelRecepcao({
                   id="manual-horario"
                   value={horarioReservaEscolhidoISO}
                   onChange={(e) => setHorarioReservaEscolhidoISO(e.target.value)}
-                  className="mt-1 min-h-10 w-full rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-sm text-[#22272B]"
+                  className="mt-1 min-h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink"
                 >
                   {horariosReservaISO.map((iso) => (
                     <option key={iso} value={iso}>
@@ -978,7 +1037,7 @@ export function PainelRecepcao({
             <button
               type="submit"
               disabled={isPending || !horarioReservaEscolhidoISO}
-              className="min-h-11 w-full rounded-xl bg-[#002664] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#146CFD] disabled:opacity-50"
+              className="min-h-11 w-full rounded-xl bg-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand disabled:opacity-50"
             >
               {isPending ? "Reservando..." : "Confirmar Agendamento"}
             </button>
@@ -990,10 +1049,10 @@ export function PainelRecepcao({
         <div className="grid gap-6 lg:grid-cols-12">
           <section
             aria-labelledby="titulo-lista-pacientes"
-            className="space-y-4 rounded-2xl border border-[#DDE2E8] bg-white p-6 lg:col-span-7"
+            className="space-y-4 rounded-xl border border-line bg-white p-6 lg:col-span-7"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 id="titulo-lista-pacientes" className="text-base font-extrabold text-[#002664]">
+              <h2 id="titulo-lista-pacientes" className="text-base font-semibold text-ink">
                 Pacientes Cadastrados ({pacientes.length})
               </h2>
               <input
@@ -1003,19 +1062,19 @@ export function PainelRecepcao({
                 value={termoBuscaPaciente}
                 onChange={(e) => setTermoBuscaPaciente(e.target.value)}
                 placeholder="Buscar nome ou telefone..."
-                className="min-h-9 rounded-xl border border-[#CDD3D9] bg-[#F8FAFC] px-3 py-1.5 text-xs text-[#22272B]"
+                className="min-h-9 rounded-xl border border-input bg-canvas px-3 py-1.5 text-xs text-ink"
               />
             </div>
 
-            <ul className="divide-y divide-[#EBEBEB]">
+            <ul className="divide-y divide-line">
               {pacientesFiltrados.map((p) => (
                 <li
                   key={p.id}
                   className="flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0 last:pb-0"
                 >
                   <div>
-                    <p className="text-sm font-bold text-[#002664]">{p.nome}</p>
-                    <p className="text-xs text-[#495054]">
+                    <p className="text-sm font-semibold text-ink">{p.nome}</p>
+                    <p className="text-xs text-muted">
                       {p.telefone} {p.email ? `• ${p.email}` : ""}
                     </p>
                   </div>
@@ -1025,7 +1084,7 @@ export function PainelRecepcao({
                       setPacienteReservaId(p.id)
                       setAbaAtiva("novo_agendamento")
                     }}
-                    className="min-h-9 rounded-xl bg-[#E6F2FD] px-3 py-1.5 text-xs font-bold text-[#002664] hover:bg-[#146CFD] hover:text-white"
+                    className="min-h-9 rounded-xl bg-soft px-3 py-1.5 text-xs font-semibold text-ink hover:bg-brand hover:text-white"
                   >
                     Agendar →
                   </button>
@@ -1036,15 +1095,15 @@ export function PainelRecepcao({
 
           <section
             aria-labelledby="titulo-novo-paciente-recepcao"
-            className="rounded-2xl border border-[#DDE2E8] bg-white p-6 lg:col-span-5"
+            className="rounded-xl border border-line bg-white p-6 lg:col-span-5"
           >
-            <h2 id="titulo-novo-paciente-recepcao" className="text-base font-extrabold text-[#002664]">
+            <h2 id="titulo-novo-paciente-recepcao" className="text-base font-semibold text-ink">
               Novo Paciente (Balcão/Telefone)
             </h2>
 
             <form onSubmit={submeterNovoPaciente} className="mt-4 space-y-3.5">
               <div>
-                <label htmlFor="rec-novo-nome" className="block text-xs font-bold text-[#22272B]">
+                <label htmlFor="rec-novo-nome" className="block text-xs font-semibold text-ink">
                   Nome completo
                 </label>
                 <input
@@ -1055,14 +1114,14 @@ export function PainelRecepcao({
                   value={novoPacienteNome}
                   onChange={(e) => setNovoPacienteNome(e.target.value)}
                   placeholder="Ex.: Roberto Nascimento"
-                  className="mt-1 min-h-10 w-full rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-sm text-[#22272B]"
+                  className="mt-1 min-h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="rec-novo-telefone"
-                  className="block text-xs font-bold text-[#22272B]"
+                  className="block text-xs font-semibold text-ink"
                 >
                   Telefone
                 </label>
@@ -1074,12 +1133,12 @@ export function PainelRecepcao({
                   value={novoPacienteTelefone}
                   onChange={(e) => setNovoPacienteTelefone(e.target.value)}
                   placeholder="Ex.: (11) 90000-5566"
-                  className="mt-1 min-h-10 w-full rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-sm text-[#22272B]"
+                  className="mt-1 min-h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink"
                 />
               </div>
 
               <div>
-                <label htmlFor="rec-novo-email" className="block text-xs font-bold text-[#22272B]">
+                <label htmlFor="rec-novo-email" className="block text-xs font-semibold text-ink">
                   E-mail (opcional)
                 </label>
                 <input
@@ -1089,14 +1148,14 @@ export function PainelRecepcao({
                   value={novoPacienteEmail}
                   onChange={(e) => setNovoPacienteEmail(e.target.value)}
                   placeholder="Ex.: roberto@exemplo.invalid"
-                  className="mt-1 min-h-10 w-full rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-sm text-[#22272B]"
+                  className="mt-1 min-h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isPending}
-                className="min-h-11 w-full rounded-xl bg-[#002664] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#146CFD]"
+                className="min-h-11 w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand"
               >
                 {isPending ? "Cadastrando..." : "Salvar Paciente"}
               </button>

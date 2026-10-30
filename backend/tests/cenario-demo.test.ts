@@ -2,6 +2,10 @@ import { describe, expect, test, vi } from "vitest"
 
 vi.mock("server-only", () => ({}))
 
+function aurora(sessaoId: string) {
+  return { sessaoId, clinicaSlug: "aurora" }
+}
+
 import {
   alternarContaDemonstrativa,
   alterarStatusFuncionarioSessao,
@@ -22,25 +26,25 @@ describe("cenário demonstrativo isolado por sessão", () => {
     const sessaoVisitanteA = "teste-sessao-a"
     const sessaoVisitanteB = "teste-sessao-b"
 
-    restaurarCenarioSessao(sessaoVisitanteA)
-    restaurarCenarioSessao(sessaoVisitanteB)
+    restaurarCenarioSessao(aurora(sessaoVisitanteA))
+    restaurarCenarioSessao(aurora(sessaoVisitanteB))
 
-    const antesB = listarAgendamentosVisiveis(sessaoVisitanteB).length
+    const antesB = listarAgendamentosVisiveis(aurora(sessaoVisitanteB)).length
 
-    const cancelamentoA = await executarCancelamentoSessao(sessaoVisitanteA, {
+    const cancelamentoA = await executarCancelamentoSessao(aurora(sessaoVisitanteA), {
       agendamentoId: "66666666-6666-4666-8666-666666666606",
       motivo: "Teste de isolamento de sessão",
     })
     expect(cancelamentoA.ok).toBe(true)
 
-    const consultaEmB = listarAgendamentosVisiveis(sessaoVisitanteB).find(
+    const consultaEmB = listarAgendamentosVisiveis(aurora(sessaoVisitanteB)).find(
       (c) => c.id === "66666666-6666-4666-8666-666666666606",
     )
     expect(consultaEmB?.situacao).toBe("agendado")
-    expect(listarAgendamentosVisiveis(sessaoVisitanteB)).toHaveLength(antesB)
+    expect(listarAgendamentosVisiveis(aurora(sessaoVisitanteB))).toHaveLength(antesB)
 
-    restaurarCenarioSessao(sessaoVisitanteA)
-    const restauradaEmA = listarAgendamentosVisiveis(sessaoVisitanteA).find(
+    restaurarCenarioSessao(aurora(sessaoVisitanteA))
+    const restauradaEmA = listarAgendamentosVisiveis(aurora(sessaoVisitanteA)).find(
       (c) => c.id === "66666666-6666-4666-8666-666666666606",
     )
     expect(restauradaEmA?.situacao).toBe("agendado")
@@ -48,9 +52,9 @@ describe("cenário demonstrativo isolado por sessão", () => {
 
   test("cadastro público cria somente paciente e exige aceite dos termos", () => {
     const sessao = "teste-cadastro-publico"
-    restaurarCenarioSessao(sessao)
+    restaurarCenarioSessao(aurora(sessao))
 
-    const semTermos = cadastrarContaPacientePublico(sessao, {
+    const semTermos = cadastrarContaPacientePublico(aurora(sessao), {
       nome: "Visitante Teste",
       email: "visitante@exemplo.invalid",
       telefone: "(11) 98888-7777",
@@ -58,57 +62,56 @@ describe("cenário demonstrativo isolado por sessão", () => {
     })
     expect(semTermos.ok).toBe(false)
 
-    const comTermos = cadastrarContaPacientePublico(sessao, {
+    const comTermos = cadastrarContaPacientePublico(aurora(sessao), {
       nome: "Visitante Teste",
       email: "visitante@exemplo.invalid",
       telefone: "(11) 98888-7777",
       aceitouTermos: true,
     })
     expect(comTermos.ok).toBe(true)
-    expect(obterCenarioSessao(sessao).atorAtual.papeis).toEqual(["paciente"])
+    expect(obterCenarioSessao(aurora(sessao))!.atorAtual.papeis).toEqual(["paciente"])
   })
 
   test("fluxo completo entre recepção, dentista e gestor atualiza indicadores e trata desativação", async () => {
     const sessao = "teste-jornada-completa"
-    restaurarCenarioSessao(sessao)
+    restaurarCenarioSessao(aurora(sessao))
 
     // 1. Recepção confirma presença e registra chegada da consulta 605
-    alternarContaDemonstrativa(sessao, "22222222-2222-4222-8222-222222222201")
-    const conf = await executarConfirmacaoPresencaSessao(
-      sessao,
+    alternarContaDemonstrativa(aurora(sessao), "22222222-2222-4222-8222-222222222201")
+    const conf = await executarConfirmacaoPresencaSessao(aurora(sessao),
       "66666666-6666-4666-8666-666666666605",
     )
     expect(conf.ok).toBe(true)
 
-    const chegada = await executarMudancaSituacaoSessao(sessao, {
+    const chegada = await executarMudancaSituacaoSessao(aurora(sessao), {
       agendamentoId: "66666666-6666-4666-8666-666666666605",
       situacao: "chegou",
     })
     expect(chegada.ok).toBe(true)
 
     // 2. Dentista (Dra. Helena) conclui atendimento da consulta 604 (que já estava em 'chegou')
-    alternarContaDemonstrativa(sessao, "22222222-2222-4222-8222-222222222202")
-    const inicioAtend = await executarMudancaSituacaoSessao(sessao, {
+    alternarContaDemonstrativa(aurora(sessao), "22222222-2222-4222-8222-222222222202")
+    const inicioAtend = await executarMudancaSituacaoSessao(aurora(sessao), {
       agendamentoId: "66666666-6666-4666-8666-666666666604",
       situacao: "em_atendimento",
     })
     expect(inicioAtend.ok).toBe(true)
 
-    const fimAtend = await executarMudancaSituacaoSessao(sessao, {
+    const fimAtend = await executarMudancaSituacaoSessao(aurora(sessao), {
       agendamentoId: "66666666-6666-4666-8666-666666666604",
       situacao: "concluido",
     })
     expect(fimAtend.ok).toBe(true)
 
     // 3. Gestor consulta painel de indicadores e testa desativação de profissional com consulta futura
-    alternarContaDemonstrativa(sessao, "22222222-2222-4222-8222-222222222204")
-    const painel = obterPainelGestorSessao(sessao, { diasPeriodo: 7 })
+    alternarContaDemonstrativa(aurora(sessao), "22222222-2222-4222-8222-222222222204")
+    const painel = obterPainelGestorSessao(aurora(sessao), { diasPeriodo: 7 })
     expect(painel.ok).toBe(true)
     if (painel.ok) {
       expect(painel.valor.indicadores.atendimentosConcluidos).toBeGreaterThanOrEqual(2)
     }
 
-    const conviteInvalido = convidarFuncionarioSessao(sessao, {
+    const conviteInvalido = convidarFuncionarioSessao(aurora(sessao), {
       nome: "Tentativa Paciente",
       email: "invalido@exemplo.invalid",
       papeis: ["paciente"],
@@ -116,7 +119,7 @@ describe("cenário demonstrativo isolado por sessão", () => {
     expect(conviteInvalido.ok).toBe(false)
 
     // Desativar Dra. Helena (que tem consulta futura amanhã 606) deve listar a consulta afetada sem apagá-la
-    const desativacao = alterarStatusFuncionarioSessao(sessao, {
+    const desativacao = alterarStatusFuncionarioSessao(aurora(sessao), {
       funcionarioId: "22222222-2222-4222-8222-222222222202",
       ativo: false,
     })
@@ -130,7 +133,7 @@ describe("cenário demonstrativo isolado por sessão", () => {
     }
 
     // Profissional desativado não pode receber novo agendamento
-    const agendarEmInativo = await executarAgendamentoSessao(sessao, {
+    const agendarEmInativo = await executarAgendamentoSessao(aurora(sessao), {
       pacienteId: "11111111-1111-4111-8111-111111111101",
       profissionalId: "33333333-3333-4333-8333-333333333301",
       servicoId: "44444444-4444-4444-8444-444444444401",

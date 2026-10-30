@@ -38,6 +38,7 @@ import {
   lerAtualizacaoPaciente,
   lerCadastroPacientePublico,
   lerCadastroPacienteRecepcao,
+  lerCadastroClinica,
   lerConviteFuncionario,
   lerPedidoAgendamento,
   lerPedidoAlterarSituacao,
@@ -45,6 +46,54 @@ import {
   lerPedidoConfirmarPresenca,
   lerPedidoRemarcacao,
 } from "../validation"
+
+export type AnamnesePaciente = {
+  queixaPrincipal: string
+  historicoOdontologico: string
+  alergias: string
+  medicamentosEmUso: string
+  observacoes: string
+}
+
+const ANAMNESE_DEMONSTRATIVA: Record<string, AnamnesePaciente> = {
+  "11111111-1111-4111-8111-111111111101": {
+    queixaPrincipal: "Sensibilidade ao frio em dente posterior direito.",
+    historicoOdontologico: "Avaliação inicial concluída na véspera. Profilaxia agendada em seguida.",
+    alergias: "Nenhuma relatada.",
+    medicamentosEmUso: "Nenhum de uso contínuo.",
+    observacoes: "Escovação diária com escova macia. Uso irregular de fio dental.",
+  },
+  "11111111-1111-4111-8111-111111111102": {
+    queixaPrincipal: "Avaliação de rotina, sem dor no momento.",
+    historicoOdontologico: "Há registro de falta em uma avaliação anterior.",
+    alergias: "Nenhuma relatada.",
+    medicamentosEmUso: "Nenhum de uso contínuo.",
+    observacoes: "Confirmar o motivo da falta antes de iniciar o atendimento.",
+  },
+  "11111111-1111-4111-8111-111111111103": {
+    queixaPrincipal: "Deseja avaliação para restauração conservadora.",
+    historicoOdontologico: "Sem consulta concluída nesta demonstração.",
+    alergias: "Nenhuma relatada.",
+    medicamentosEmUso: "Nenhum de uso contínuo.",
+    observacoes: "Sem conta própria. O contato operacional é o telefone informado na recepção.",
+  },
+  "11111111-1111-4111-8111-111111111104": {
+    queixaPrincipal: "Procura limpeza de rotina.",
+    historicoOdontologico: "Profilaxia anterior cancelada por imprevisto no horário da tarde.",
+    alergias: "Nenhuma relatada.",
+    medicamentosEmUso: "Nenhum de uso contínuo.",
+    observacoes: "A profilaxia pode ser remarcada em um horário livre.",
+  },
+}
+
+function completarAnamneseDemonstrativa(estado: EstadoClinica) {
+  if (estado.clinica.slug !== SLUG_CLINICA_EXEMPLO) return
+  for (const paciente of estado.pacientes) {
+    if (paciente.anamnese) continue
+    const demonstrativa = ANAMNESE_DEMONSTRATIVA[paciente.id]
+    if (demonstrativa) paciente.anamnese = { ...demonstrativa }
+  }
+}
 
 export type PacienteCadastro = {
   id: string
@@ -55,6 +104,7 @@ export type PacienteCadastro = {
   criadoEm: Date
   termosAceitosVersao: string | null
   termosAceitosEm: Date | null
+  anamnese: AnamnesePaciente | null
 }
 
 export type ProfissionalClinica = {
@@ -190,9 +240,42 @@ export const CONTAS_DEMONSTRATIVAS: readonly ContaDemonstrativa[] = [
   },
 ] as const
 
-export type EstadoCenario = {
+export const SLUG_CLINICA_EXEMPLO = "aurora"
+export const LIMITE_CLINICAS_POR_SESSAO = 3
+
+export const SLUGS_RESERVADOS = [
+  "aurora",
+  "cadastro",
+  "c",
+  "privacidade",
+  "termos",
+  "acesso",
+  "paciente",
+  "recepcao",
+  "dentista",
+  "gestor",
+] as const
+
+export type DadosClinica = {
+  id: string
+  slug: string
+  nome: string
+  ficticia: boolean
+  horarioFuncionamento: string
+  endereco: string
+  telefone: string
+  email: string
+}
+
+export type EscopoClinica = {
+  sessaoId: string
+  clinicaSlug: string
+}
+
+export type EstadoClinica = {
   sessaoId: string
   criadoEm: Date
+  clinica: DadosClinica
   atorAtual: Ator
   nomeAtorAtual: string
   emailAtorAtual: string
@@ -207,18 +290,40 @@ export type EstadoCenario = {
   marcasOperacaoMs: number[]
 }
 
-const LIMITE_SESSOES_MEMORIA = 200
-const PADRAO_SESSAO_ID_SEGURO = /^[a-zA-Z0-9_-]{4,80}$/
+/** @deprecated Use EstadoClinica. Mantido para imports existentes. */
+export type EstadoCenario = EstadoClinica
 
-const globalComCenarios = globalThis as unknown as {
-  __sgcCenariosDemo?: Map<string, EstadoCenario>
+type EstadoSessao = {
+  sessaoId: string
+  clinicas: Map<string, EstadoClinica>
 }
 
-function mapaCenarios(): Map<string, EstadoCenario> {
-  if (!globalComCenarios.__sgcCenariosDemo) {
-    globalComCenarios.__sgcCenariosDemo = new Map<string, EstadoCenario>()
+const LIMITE_SESSOES_MEMORIA = 200
+const PADRAO_SESSAO_ID_SEGURO = /^[a-zA-Z0-9_-]{4,80}$/
+const PADRAO_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+const globalComCenarios = globalThis as unknown as {
+  __sgcSessoesDemo?: Map<string, EstadoSessao>
+}
+
+function mapaSessoes(): Map<string, EstadoSessao> {
+  if (!globalComCenarios.__sgcSessoesDemo) {
+    globalComCenarios.__sgcSessoesDemo = new Map<string, EstadoSessao>()
   }
-  return globalComCenarios.__sgcCenariosDemo
+  return globalComCenarios.__sgcSessoesDemo
+}
+
+export function dadosClinicaExemplo(): DadosClinica {
+  return {
+    id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+    slug: SLUG_CLINICA_EXEMPLO,
+    nome: DADOS_CLINICA_FICTICIA.nome,
+    ficticia: true,
+    horarioFuncionamento: DADOS_CLINICA_FICTICIA.horarioFuncionamento,
+    endereco: DADOS_CLINICA_FICTICIA.enderecoFicticio,
+    telefone: DADOS_CLINICA_FICTICIA.telefoneFicticio,
+    email: DADOS_CLINICA_FICTICIA.emailFicticio,
+  }
 }
 
 export function normalizarSessaoIdSeguro(sessaoIdBruto: unknown): string {
@@ -322,6 +427,7 @@ function criarEstadoInicial(sessaoId: string, agora = new Date()): EstadoCenario
       criadoEm: instanteClinica(ontem.ano, ontem.mes, ontem.dia, 8, 0),
       termosAceitosVersao: DADOS_CLINICA_FICTICIA.versaoTermos,
       termosAceitosEm: instanteClinica(ontem.ano, ontem.mes, ontem.dia, 8, 0),
+      anamnese: { ...ANAMNESE_DEMONSTRATIVA["11111111-1111-4111-8111-111111111101"] },
     },
     {
       id: "11111111-1111-4111-8111-111111111102",
@@ -332,6 +438,7 @@ function criarEstadoInicial(sessaoId: string, agora = new Date()): EstadoCenario
       criadoEm: instanteClinica(ontem.ano, ontem.mes, ontem.dia, 8, 15),
       termosAceitosVersao: DADOS_CLINICA_FICTICIA.versaoTermos,
       termosAceitosEm: instanteClinica(ontem.ano, ontem.mes, ontem.dia, 8, 15),
+      anamnese: { ...ANAMNESE_DEMONSTRATIVA["11111111-1111-4111-8111-111111111102"] },
     },
     {
       id: "11111111-1111-4111-8111-111111111103",
@@ -342,6 +449,7 @@ function criarEstadoInicial(sessaoId: string, agora = new Date()): EstadoCenario
       criadoEm: instanteClinica(ontem.ano, ontem.mes, ontem.dia, 9, 0),
       termosAceitosVersao: null,
       termosAceitosEm: null,
+      anamnese: { ...ANAMNESE_DEMONSTRATIVA["11111111-1111-4111-8111-111111111103"] },
     },
     {
       id: "11111111-1111-4111-8111-111111111104",
@@ -352,6 +460,7 @@ function criarEstadoInicial(sessaoId: string, agora = new Date()): EstadoCenario
       criadoEm: instanteClinica(ontem.ano, ontem.mes, ontem.dia, 9, 30),
       termosAceitosVersao: DADOS_CLINICA_FICTICIA.versaoTermos,
       termosAceitosEm: instanteClinica(ontem.ano, ontem.mes, ontem.dia, 9, 30),
+      anamnese: { ...ANAMNESE_DEMONSTRATIVA["11111111-1111-4111-8111-111111111104"] },
     },
   ]
 
@@ -751,6 +860,7 @@ function criarEstadoInicial(sessaoId: string, agora = new Date()): EstadoCenario
   return {
     sessaoId,
     criadoEm: new Date(agora),
+    clinica: dadosClinicaExemplo(),
     atorAtual: {
       id: contaInicial.id,
       papeis: [...contaInicial.papeis],
@@ -770,9 +880,9 @@ function criarEstadoInicial(sessaoId: string, agora = new Date()): EstadoCenario
   }
 }
 
-export function obterCenarioSessao(sessaoIdBruto: string): EstadoCenario {
+function obterOuCriarSessao(sessaoIdBruto: string): EstadoSessao {
   const sessaoId = normalizarSessaoIdSeguro(sessaoIdBruto)
-  const mapa = mapaCenarios()
+  const mapa = mapaSessoes()
   const existente = mapa.get(sessaoId)
   if (existente) return existente
 
@@ -781,14 +891,123 @@ export function obterCenarioSessao(sessaoIdBruto: string): EstadoCenario {
     if (primeiraChave) mapa.delete(primeiraChave)
   }
 
-  const novo = criarEstadoInicial(sessaoId)
-  mapa.set(sessaoId, novo)
-  return novo
+  const sessao: EstadoSessao = {
+    sessaoId,
+    clinicas: new Map([[SLUG_CLINICA_EXEMPLO, criarEstadoInicial(sessaoId)]]),
+  }
+  mapa.set(sessaoId, sessao)
+  return sessao
 }
 
-export function restaurarCenarioSessao(sessaoIdBruto: string, manterContaId?: string): EstadoCenario {
-  const sessaoId = normalizarSessaoIdSeguro(sessaoIdBruto)
-  const mapa = mapaCenarios()
+export function resolverClinica(escopo: EscopoClinica): Resultado<EstadoClinica> {
+  const sessao = obterOuCriarSessao(escopo.sessaoId)
+  const clinica = sessao.clinicas.get(escopo.clinicaSlug)
+  if (!clinica) {
+    return falha("clinica_nao_encontrada", "A clínica não foi encontrada nesta sessão.")
+  }
+  completarAnamneseDemonstrativa(clinica)
+  return sucesso(clinica)
+}
+
+export function obterCenarioSessao(escopo: EscopoClinica): EstadoClinica | null {
+  const resolvido = resolverClinica(escopo)
+  return resolvido.ok ? resolvido.valor : null
+}
+
+export function listarClinicasSessao(sessaoIdBruto: string): DadosClinica[] {
+  return [...obterOuCriarSessao(sessaoIdBruto).clinicas.values()].map((clinica) => clinica.clinica)
+}
+
+const HORARIO_PADRAO_CLINICA =
+  "Segunda a sábado, das 08:00 às 18:00 (Horário de Brasília — America/Sao_Paulo)"
+
+export function cadastrarClinicaSessao(
+  sessaoIdBruto: string,
+  entradaBruta: unknown,
+): Resultado<DadosClinica> {
+  const validado = lerCadastroClinica(entradaBruta)
+  if (!validado.ok) return validado
+
+  const { nome, slug, responsavelNome, responsavelEmail } = validado.valor
+  if ((SLUGS_RESERVADOS as readonly string[]).includes(slug)) {
+    return falha("entrada_invalida", "Esse endereço já está reservado. Escolha outro.")
+  }
+  if (!PADRAO_SLUG.test(slug)) {
+    return falha("entrada_invalida", "Use apenas letras minúsculas, números e hífen no endereço.")
+  }
+
+  const sessao = obterOuCriarSessao(sessaoIdBruto)
+  if (sessao.clinicas.size >= LIMITE_CLINICAS_POR_SESSAO) {
+    return falha(
+      "entrada_invalida",
+      `Esta sessão demonstrativa aceita no máximo ${LIMITE_CLINICAS_POR_SESSAO} clínicas.`,
+    )
+  }
+  if (sessao.clinicas.has(slug)) {
+    return falha("entrada_invalida", "Já existe uma clínica com esse endereço nesta sessão.")
+  }
+
+  const responsavelId = crypto.randomUUID()
+  const dados: DadosClinica = {
+    id: crypto.randomUUID(),
+    slug,
+    nome,
+    ficticia: true,
+    horarioFuncionamento: HORARIO_PADRAO_CLINICA,
+    endereco: "",
+    telefone: "",
+    email: responsavelEmail.toLowerCase(),
+  }
+  const clinica = criarClinicaVazia(sessao.sessaoId, dados, {
+    id: responsavelId,
+    nome: responsavelNome,
+    email: responsavelEmail.toLowerCase(),
+  })
+  sessao.clinicas.set(slug, clinica)
+  return sucesso(dados)
+}
+
+function criarClinicaVazia(
+  sessaoId: string,
+  clinica: DadosClinica,
+  responsavel: { id: string; nome: string; email: string },
+): EstadoClinica {
+  return {
+    sessaoId,
+    criadoEm: new Date(),
+    clinica,
+    atorAtual: {
+      id: responsavel.id,
+      papeis: ["gestor"],
+      profissionalId: null,
+    },
+    nomeAtorAtual: responsavel.nome,
+    emailAtorAtual: responsavel.email,
+    pacientes: [],
+    profissionais: [],
+    funcionarios: [
+      {
+        id: responsavel.id,
+        nome: responsavel.nome,
+        email: responsavel.email,
+        papeis: ["gestor"],
+        profissionalId: null,
+        ativo: true,
+        convitePendente: false,
+      },
+    ],
+    servicos: [],
+    bloqueios: [],
+    consultas: [],
+    historico: [],
+    cadeiaTransacao: Promise.resolve(),
+    marcasOperacaoMs: [],
+  }
+}
+
+export function restaurarCenarioSessao(escopo: EscopoClinica, manterContaId?: string): EstadoClinica {
+  const sessaoId = normalizarSessaoIdSeguro(escopo.sessaoId)
+  const mapa = mapaSessoes()
   const restaurado = criarEstadoInicial(sessaoId)
   if (manterContaId) {
     const conta = CONTAS_DEMONSTRATIVAS.find((item) => item.id === manterContaId)
@@ -802,19 +1021,24 @@ export function restaurarCenarioSessao(sessaoIdBruto: string, manterContaId?: st
       restaurado.emailAtorAtual = conta.email
     }
   }
-  mapa.set(sessaoId, restaurado)
+  mapa.set(sessaoId, {
+    sessaoId,
+    clinicas: new Map([[SLUG_CLINICA_EXEMPLO, restaurado]]),
+  })
   return restaurado
 }
 
 export function alternarContaDemonstrativa(
-  sessaoId: string,
+  escopo: EscopoClinica,
   contaId: string,
 ): Resultado<ContaDemonstrativa> {
   if (typeof contaId !== "string" || contaId.trim().length === 0) {
     return falha("entrada_invalida", "Identificador de conta inválido.")
   }
 
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
 
   // Verifica se é um funcionário e se está ativo antes de permitir alternância para ele
   const funcionario = estado.funcionarios.find((item) => item.id === contaId)
@@ -822,16 +1046,18 @@ export function alternarContaDemonstrativa(
     return falha("sem_permissao", "Esta conta de funcionário foi desativada pelo gestor.")
   }
 
-  const conta = CONTAS_DEMONSTRATIVAS.find((item) => item.id === contaId)
-  if (conta) {
-    estado.atorAtual = {
-      id: conta.id,
-      papeis: [...conta.papeis],
-      profissionalId: conta.profissionalId,
+  if (estado.clinica.slug === SLUG_CLINICA_EXEMPLO) {
+    const conta = CONTAS_DEMONSTRATIVAS.find((item) => item.id === contaId)
+    if (conta) {
+      estado.atorAtual = {
+        id: conta.id,
+        papeis: [...conta.papeis],
+        profissionalId: conta.profissionalId,
+      }
+      estado.nomeAtorAtual = conta.nome
+      estado.emailAtorAtual = conta.email
+      return sucesso(conta)
     }
-    estado.nomeAtorAtual = conta.nome
-    estado.emailAtorAtual = conta.email
-    return sucesso(conta)
   }
 
   const paciente = estado.pacientes.find((item) => item.id === contaId && item.possuiConta)
@@ -884,7 +1110,7 @@ export function alternarContaDemonstrativa(
 }
 
 export function autenticarPorEmailDemo(
-  sessaoId: string,
+  escopo: EscopoClinica,
   email: unknown,
 ): Resultado<{ rotaInicial: string; nome: string }> {
   if (typeof email !== "string") {
@@ -895,7 +1121,9 @@ export function autenticarPorEmailDemo(
     return falha("entrada_invalida", "Informe um e-mail de acesso válido.")
   }
 
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const taxa = verificarTaxaOperacao(estado)
   if (!taxa.ok) return taxa
 
@@ -942,13 +1170,15 @@ export function autenticarPorEmailDemo(
 }
 
 export function cadastrarContaPacientePublico(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entradaBruta: unknown,
 ): Resultado<PacienteCadastro> {
   const validado = lerCadastroPacientePublico(entradaBruta)
   if (!validado.ok) return validado
 
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const taxa = verificarTaxaOperacao(estado)
   if (!taxa.ok) return taxa
 
@@ -975,6 +1205,7 @@ export function cadastrarContaPacientePublico(
     criadoEm: agora,
     termosAceitosVersao: DADOS_CLINICA_FICTICIA.versaoTermos,
     termosAceitosEm: agora,
+    anamnese: null,
   }
 
   estado.pacientes.push(novoPaciente)
@@ -990,13 +1221,15 @@ export function cadastrarContaPacientePublico(
 }
 
 export function atualizarDadosBasicosPaciente(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entradaBruta: unknown,
 ): Resultado<PacienteCadastro> {
   const validado = lerAtualizacaoPaciente(entradaBruta)
   if (!validado.ok) return validado
 
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
   const ator = checkAtor.valor
@@ -1034,13 +1267,15 @@ export function atualizarDadosBasicosPaciente(
 }
 
 export function cadastrarPacientePelaRecepcao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entradaBruta: unknown,
 ): Resultado<PacienteCadastro> {
   const validado = lerCadastroPacienteRecepcao(entradaBruta)
   if (!validado.ok) return validado
 
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
 
@@ -1065,6 +1300,7 @@ export function cadastrarPacientePelaRecepcao(
     criadoEm: new Date(),
     termosAceitosVersao: null,
     termosAceitosEm: null,
+    anamnese: null,
   }
   estado.pacientes.push(novo)
   return sucesso(novo)
@@ -1113,7 +1349,7 @@ export function bloqueiosDoProfissionalParaDia(
 }
 
 export function consultarHorariosDisponiveisNoDia(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entrada: {
     profissionalId: string
     servicoId: string
@@ -1121,7 +1357,9 @@ export function consultarHorariosDisponiveisNoDia(
     ignorarAgendamentoId?: string
   },
 ): Resultado<Date[]> {
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const dataCivil = lerDataISOClinica(entrada.dataISO)
   if (!dataCivil) {
     return falha("entrada_invalida", "Data informada é inválida.")
@@ -1272,13 +1510,15 @@ function copiarHistorico(registro: RegistroHistorico): RegistroHistorico {
 }
 
 export async function executarAgendamentoSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entradaBruta: unknown,
 ): Promise<Resultado<Agendamento>> {
   const validado = lerPedidoAgendamento(entradaBruta)
   if (!validado.ok) return validado
 
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
   const ator = checkAtor.valor
@@ -1369,13 +1609,15 @@ export async function executarAgendamentoSessao(
 }
 
 export async function executarRemarcacaoSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entradaBruta: unknown,
 ): Promise<Resultado<Agendamento>> {
   const validado = lerPedidoRemarcacao(entradaBruta)
   if (!validado.ok) return validado
 
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
   const ator = checkAtor.valor
@@ -1434,13 +1676,15 @@ export async function executarRemarcacaoSessao(
 }
 
 export async function executarCancelamentoSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entradaBruta: unknown,
 ): Promise<Resultado<Agendamento>> {
   const validado = lerPedidoCancelamento(entradaBruta)
   if (!validado.ok) return validado
 
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
 
@@ -1455,13 +1699,15 @@ export async function executarCancelamentoSessao(
 }
 
 export async function executarMudancaSituacaoSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entradaBruta: unknown,
 ): Promise<Resultado<Agendamento>> {
   const validado = lerPedidoAlterarSituacao(entradaBruta)
   if (!validado.ok) return validado
 
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
   const ator = checkAtor.valor
@@ -1488,13 +1734,15 @@ export async function executarMudancaSituacaoSessao(
 }
 
 export async function executarConfirmacaoPresencaSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   agendamentoIdBruto: unknown,
 ): Promise<Resultado<Agendamento>> {
   const validado = lerPedidoConfirmarPresenca({ agendamentoId: agendamentoIdBruto })
   if (!validado.ok) return validado
 
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
 
@@ -1516,8 +1764,10 @@ export type AgendamentoDetalhado = Agendamento & {
   historico: RegistroHistorico[]
 }
 
-export function listarAgendamentosVisiveis(sessaoId: string): AgendamentoDetalhado[] {
-  const estado = obterCenarioSessao(sessaoId)
+export function listarAgendamentosVisiveis(escopo: EscopoClinica): AgendamentoDetalhado[] {
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return []
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return []
   const atorAtual = checkAtor.valor
@@ -1558,13 +1808,15 @@ export function listarAgendamentosVisiveis(sessaoId: string): AgendamentoDetalha
 }
 
 export function convidarFuncionarioSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entradaBruta: unknown,
 ): Resultado<FuncionarioClinica> {
   const validado = lerConviteFuncionario(entradaBruta)
   if (!validado.ok) return validado
 
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
   const atorAtual = checkAtor.valor
@@ -1624,7 +1876,7 @@ export function convidarFuncionarioSessao(
 }
 
 export function alterarStatusFuncionarioSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entrada: {
     funcionarioId: string
     ativo: boolean
@@ -1633,7 +1885,9 @@ export function alterarStatusFuncionarioSessao(
   funcionario: FuncionarioClinica
   consultasFuturasAfetadas: AgendamentoDetalhado[]
 }> {
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
   const atorAtual = checkAtor.valor
@@ -1666,7 +1920,7 @@ export function alterarStatusFuncionarioSessao(
         new Date(),
       )
       const idsAfetados = new Set(afetadas.map((a) => a.id))
-      afetadasDetalhadas = listarAgendamentosVisiveis(sessaoId).filter((a) =>
+      afetadasDetalhadas = listarAgendamentosVisiveis(escopo).filter((a) =>
         idsAfetados.has(a.id),
       )
     }
@@ -1679,7 +1933,7 @@ export function alterarStatusFuncionarioSessao(
 }
 
 export function salvarServicoSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entrada: {
     nome: string
     descricao: string
@@ -1689,7 +1943,9 @@ export function salvarServicoSessao(
     profissionaisHabilitados: string[]
   },
 ): Resultado<ServicoClinica> {
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
 
@@ -1736,14 +1992,16 @@ export function salvarServicoSessao(
 }
 
 export function atualizarExpedienteProfissionalSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entrada: {
     profissionalId: string
     aberturaHora: number
     fechamentoHora: number
   },
 ): Resultado<ProfissionalClinica> {
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
 
@@ -1775,7 +2033,7 @@ export function atualizarExpedienteProfissionalSessao(
 }
 
 export function adicionarBloqueioSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   entrada: {
     profissionalId: string
     dataISO: string
@@ -1784,7 +2042,9 @@ export function adicionarBloqueioSessao(
     motivo: string
   },
 ): Resultado<BloqueioClinica> {
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
 
@@ -1830,10 +2090,12 @@ export function adicionarBloqueioSessao(
 }
 
 export function removerBloqueioSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   bloqueioId: string,
 ): Resultado<null> {
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
 
@@ -1850,7 +2112,7 @@ export function removerBloqueioSessao(
 }
 
 export function obterPainelGestorSessao(
-  sessaoId: string,
+  escopo: EscopoClinica,
   filtros: {
     diasPeriodo?: number
     profissionalId?: string
@@ -1863,7 +2125,9 @@ export function obterPainelGestorSessao(
   consultasProfissionaisInativos: AgendamentoDetalhado[]
   consultasSemConfirmacao: AgendamentoDetalhado[]
 }> {
-  const estado = obterCenarioSessao(sessaoId)
+  const resolvido = resolverClinica(escopo)
+  if (!resolvido.ok) return resolvido
+  const estado = resolvido.valor
   const checkAtor = garantirAtorAtivo(estado)
   if (!checkAtor.ok) return checkAtor
 
@@ -1915,7 +2179,7 @@ export function obterPainelGestorSessao(
     agora,
   })
 
-  const todasDetalhadas = listarAgendamentosVisiveis(sessaoId)
+  const todasDetalhadas = listarAgendamentosVisiveis(escopo)
   const proximasConsultas = todasDetalhadas.filter(
     (c) =>
       c.inicio >= agora &&

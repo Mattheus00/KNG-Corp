@@ -3,8 +3,9 @@
 import type { Papel } from "@sgc/backend/domain"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
+import { useRef, useState, useTransition } from "react"
 import { acaoAlternarPerfilDemo, acaoRestaurarDemonstracao } from "@/app/acoes"
+import { Icone, Marca, type NomeIcone } from "@/components/icone"
 import { ROTULO_PAPEL } from "@/lib/formatadores"
 
 export type ContaDemoResumo = {
@@ -17,35 +18,40 @@ export type ContaDemoResumo = {
   rotaInicial: string
 }
 
-export function BarraDemonstracao({
-  atorId,
-  nomeAtor,
-  papeisAtor,
-  contasDemo,
-}: {
+export function BarraDemonstracao({ atorId, nomeAtor, papeisAtor, contasDemo, nomeClinica, basePath }: {
   atorId: string
   nomeAtor: string
   papeisAtor: readonly Papel[]
   contasDemo: readonly ContaDemoResumo[]
+  nomeClinica: string
+  basePath: string
 }) {
   const pathname = usePathname()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [aviso, setAviso] = useState<string | null>(null)
+  const [menuAberto, setMenuAberto] = useState(false)
+  const menuRef = useRef<HTMLButtonElement>(null)
+  const papeis = papeisAtor.map((papel) => ROTULO_PAPEL[papel]).join(" + ")
+  const iniciais = nomeAtor.split(" ").filter(Boolean).slice(0, 2).map((nome) => nome[0]).join("")
+  const links: { href: string; rotulo: string; icone: NomeIcone }[] = [
+    { href: basePath, rotulo: "Visão geral", icone: "inicio" },
+    { href: `${basePath}/paciente`, rotulo: "Paciente", icone: "conta" },
+    { href: `${basePath}/recepcao`, rotulo: "Recepção", icone: "agenda" },
+    { href: `${basePath}/dentista`, rotulo: "Dentista", icone: "cuidado" },
+    { href: `${basePath}/gestor`, rotulo: "Gestor", icone: "grafico" },
+    { href: `${basePath}/acesso`, rotulo: "Contas e acesso", icone: "pessoas" },
+  ]
+  const atual = links.find((item) => item.href === pathname)
 
-  function trocarPerfil(contaId: string, irParaRota: boolean) {
+  function trocarPerfil(contaId: string) {
     setAviso(null)
     startTransition(async () => {
       const res = await acaoAlternarPerfilDemo(contaId)
       if (res.ok) {
-        if (irParaRota && res.dados?.rotaInicial) {
-          router.push(res.dados.rotaInicial)
-        } else {
-          router.refresh()
-        }
-      } else {
-        setAviso(res.mensagem)
-      }
+        if (res.dados?.rotaInicial) router.push(res.dados.rotaInicial)
+        else router.refresh()
+      } else setAviso(res.mensagem)
     })
   }
 
@@ -54,119 +60,61 @@ export function BarraDemonstracao({
     startTransition(async () => {
       const res = await acaoRestaurarDemonstracao()
       setAviso(res.mensagem)
-      router.refresh()
+      if (res.ok && res.dados?.rotaInicial) router.push(res.dados.rotaInicial)
+      else router.refresh()
     })
   }
 
-  const linksPrincipais = [
-    { href: "/", rotulo: "Início" },
-    { href: "/paciente", rotulo: "Paciente" },
-    { href: "/recepcao", rotulo: "Recepção" },
-    { href: "/dentista", rotulo: "Dentista" },
-    { href: "/gestor", rotulo: "Gestor" },
-    { href: "/acesso", rotulo: "Contas" },
-  ]
-
   return (
-    <header className="sticky top-0 z-40 border-b border-[#DDE2E8] bg-white/95 backdrop-blur">
-      {/* Compact WebApp Top Bar */}
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        {/* App Brand */}
-        <Link
-          href="/"
-          className="inline-flex min-h-11 items-center gap-2.5 rounded-xl pr-2 text-[#002664]"
-        >
-          <span
-            aria-hidden="true"
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#002664] text-xs font-extrabold tracking-tight text-white"
-          >
-            SGC
-          </span>
-          <div className="leading-tight">
-            <span className="block text-sm font-extrabold text-[#002664] sm:text-base">
-              Aurora Clínica
-            </span>
-            <span className="block text-[11px] font-medium text-[#495054]">
-              WebApp Demonstrativo
-            </span>
-          </div>
-        </Link>
-
-        {/* Main App Navigation Pills */}
-        <nav
-          aria-label="Navegação do aplicativo"
-          className="flex flex-wrap items-center gap-1 rounded-xl bg-[#F2F4F7] p-1"
-        >
-          {linksPrincipais.map((item) => {
-            const ativo =
-              item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href)
+    <>
+      <aside className="app-sidebar" onKeyDown={(evento) => {
+        if (evento.key === "Escape" && menuAberto) {
+          setMenuAberto(false)
+          menuRef.current?.focus()
+        }
+      }}>
+        <div className="sidebar-mobile-row">
+          <Link href={basePath} className="sidebar-brand" aria-label={`${nomeClinica} — início`}>
+            <Marca />
+          </Link>
+          <button ref={menuRef} type="button" className="mobile-menu" aria-expanded={menuAberto} aria-controls="navegacao-app" onClick={() => setMenuAberto(!menuAberto)}>
+            <Icone nome={menuAberto ? "fechar" : "menu"} /> Menu
+          </button>
+        </div>
+        <div className="clinic-identity"><Icone nome="inicio" /><div><strong>{nomeClinica}</strong><small>Seu espaço de cuidado</small></div></div>
+        <p className="nav-caption">Espaço de trabalho</p>
+        <nav id="navegacao-app" aria-label="Módulos do sistema" className={`app-nav ${menuAberto ? "is-open" : ""}`}>
+          {links.map((item) => {
+            const ativo = item.href === pathname
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={ativo ? "page" : undefined}
-                className={`inline-flex min-h-9 items-center rounded-lg px-3 py-1.5 text-xs font-bold transition-all sm:text-sm ${
-                  ativo
-                    ? "bg-[#002664] text-white shadow-xs"
-                    : "text-[#495054] hover:bg-white/70 hover:text-[#002664]"
-                }`}
-              >
-                {item.rotulo}
+              <Link key={item.href} href={item.href} aria-current={ativo ? "page" : undefined} onClick={() => setMenuAberto(false)}>
+                <Icone nome={item.icone} /><span>{item.rotulo}</span>{ativo && <span className="nav-current-dot" aria-hidden="true" />}
               </Link>
             )
           })}
         </nav>
-
-        {/* Quick Profile Switcher Dropdown + Reset */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-xl border border-[#CDD3D9] bg-[#F8FAFC] px-2.5 py-1">
-            <span className="hidden text-[11px] font-semibold text-[#495054] sm:inline">
-              Visão:
-            </span>
-            <label htmlFor="seletor-perfil-topo" className="sr-only">
-              Alternar perfil demonstrativo
-            </label>
-            <select
-              id="seletor-perfil-topo"
-              disabled={isPending}
-              value={atorId}
-              onChange={(e) => trocarPerfil(e.target.value, true)}
-              className="min-h-8 cursor-pointer bg-transparent text-xs font-bold text-[#002664] focus:outline-none"
-            >
-              {contasDemo.map((conta) => (
-                <option key={conta.id} value={conta.id}>
-                  {conta.rotuloPerfil} — {conta.nome}
-                </option>
-              ))}
-              {!contasDemo.some((c) => c.id === atorId) && (
-                <option value={atorId}>
-                  {nomeAtor} ({papeisAtor.map((p) => ROTULO_PAPEL[p]).join(" + ")})
-                </option>
-              )}
-            </select>
+        <div className="sidebar-bottom">
+          <div className="sidebar-note"><strong><Icone nome="brilho" width="16" height="16" /> Explore a demonstração</strong><p>Troque de perfil no topo e conheça cada etapa do atendimento. Use apenas dados fictícios.</p></div>
+          <Link className="sidebar-return" href="/"><Icone nome="voltar" width="16" height="16" /> Conhecer o SGC</Link>
+        </div>
+      </aside>
+      <header className="app-topbar">
+        <div className="topbar-context"><span>Clínica <span aria-hidden="true">/</span></span><strong>{atual?.rotulo ?? nomeClinica}</strong><span className="demo-label">Demonstração</span></div>
+        <div className="topbar-tools">
+          <button type="button" disabled={isPending} onClick={restaurarDados} className="reset-button" aria-label="Restaurar dados" title="Restaurar dados da demonstração"><Icone nome="restaurar" width="16" height="16" /><span>Restaurar dados</span></button>
+          <div className="profile-select">
+            <span className="avatar" aria-hidden="true">{iniciais}</span>
+            <div>
+              <label htmlFor="seletor-perfil-topo">PERFIL DEMONSTRATIVO</label>
+              <select id="seletor-perfil-topo" aria-label="Alternar perfil demonstrativo" disabled={isPending} value={atorId} onChange={(evento) => trocarPerfil(evento.target.value)}>
+                {contasDemo.map((conta) => <option key={conta.id} value={conta.id}>{conta.rotuloPerfil} — {conta.nome}</option>)}
+                {!contasDemo.some((conta) => conta.id === atorId) && <option value={atorId}>{nomeAtor} ({papeis})</option>}
+              </select>
+            </div>
           </div>
-
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={restaurarDados}
-            title="Restaurar dados fictícios iniciais"
-            className="inline-flex min-h-10 items-center rounded-xl border border-[#CDD3D9] bg-white px-3 py-1.5 text-xs font-semibold text-[#495054] transition-colors hover:border-[#002664] hover:text-[#002664]"
-          >
-            ↺ Resetar
-          </button>
         </div>
-      </div>
-
-      {aviso && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="border-t border-[#B8D8FA] bg-[#E6F2FD] px-4 py-1.5 text-center text-xs font-semibold text-[#002664]"
-        >
-          {aviso}
-        </div>
-      )}
-    </header>
+        {aviso && <div role="status" aria-live="polite" className="app-feedback">{aviso}</div>}
+      </header>
+    </>
   )
 }

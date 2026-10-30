@@ -4,6 +4,14 @@ import path from "node:path"
 const nextConfig = {
   transpilePackages: ["@sgc/backend"],
   poweredByHeader: false,
+  async redirects() {
+    const antigas = ["recepcao", "paciente", "dentista", "gestor", "acesso"]
+    return antigas.map((rota) => ({
+      source: `/${rota}`,
+      destination: `/c/aurora/${rota}`,
+      permanent: true,
+    }))
+  },
   async headers() {
     return [
       {

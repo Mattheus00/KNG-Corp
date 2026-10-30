@@ -96,7 +96,7 @@ export function PainelPaciente({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [abaAtiva, setAbaAtiva] = useState<"agendar" | "consultas" | "dados">("agendar")
+  const [abaAtiva, setAbaAtiva] = useState<"agendar" | "consultas" | "dados">("consultas")
 
   const [erroGlobal, setErroGlobal] = useState<string | null>(null)
   const [sucessoGlobal, setSucessoGlobal] = useState<string | null>(null)
@@ -324,53 +324,34 @@ export function PainelPaciente({
 
   return (
     <div className="space-y-6">
-      {/* Compact App Header + Segmented Pill Navigation */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="module-heading">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#002664]">
+          <p className="eyebrow">Seu espaço de cuidado</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">
             Olá, {paciente.nome}
           </h1>
-          <p className="text-xs text-[#495054]">
-            Escolha um horário livre ou gerencie suas consultas agendadas.
+          <p className="text-xs text-muted">
+            Acompanhe suas consultas ou marque uma nova.
           </p>
         </div>
 
         <div
-          role="tablist"
+          role="group"
           aria-label="Seções do Paciente"
-          className="inline-flex flex-wrap gap-1 rounded-xl border border-[#DDE2E8] bg-white p-1"
+          className="module-tabs"
         >
           <button
             type="button"
-            role="tab"
-            aria-selected={abaAtiva === "agendar"}
-            onClick={() => setAbaAtiva("agendar")}
-            className={`min-h-10 rounded-lg px-4 py-1.5 text-xs font-bold transition-all sm:text-sm ${
-              abaAtiva === "agendar"
-                ? "bg-[#002664] text-white"
-                : "text-[#495054] hover:bg-[#F2F4F7] hover:text-[#002664]"
-            }`}
-          >
-            Agendar
-          </button>
-
-          <button
-            type="button"
-            role="tab"
-            aria-selected={abaAtiva === "consultas"}
+            aria-pressed={abaAtiva === "consultas"}
             onClick={() => setAbaAtiva("consultas")}
-            className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-bold transition-all sm:text-sm ${
-              abaAtiva === "consultas"
-                ? "bg-[#002664] text-white"
-                : "text-[#495054] hover:bg-[#F2F4F7] hover:text-[#002664]"
-            }`}
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold sm:text-sm"
           >
             <span>Minhas Consultas</span>
             <span
               className={`rounded-full px-2 py-0.5 text-[11px] tabular-nums ${
                 abaAtiva === "consultas"
                   ? "bg-white/20 text-white"
-                  : "bg-[#E6F2FD] text-[#002664]"
+                  : "bg-soft text-ink"
               }`}
             >
               {consultasFuturas.length}
@@ -379,16 +360,20 @@ export function PainelPaciente({
 
           <button
             type="button"
-            role="tab"
-            aria-selected={abaAtiva === "dados"}
+            aria-pressed={abaAtiva === "dados"}
             onClick={() => setAbaAtiva("dados")}
-            className={`min-h-10 rounded-lg px-4 py-1.5 text-xs font-bold transition-all sm:text-sm ${
-              abaAtiva === "dados"
-                ? "bg-[#002664] text-white"
-                : "text-[#495054] hover:bg-[#F2F4F7] hover:text-[#002664]"
-            }`}
+            className="min-h-10 rounded-lg px-4 py-1.5 text-xs font-semibold sm:text-sm"
           >
             Meus Dados
+          </button>
+
+          <button
+            type="button"
+            aria-pressed={abaAtiva === "agendar"}
+            onClick={() => setAbaAtiva("agendar")}
+            className="nova-consulta"
+          >
+            Nova consulta
           </button>
         </div>
       </div>
@@ -415,16 +400,16 @@ export function PainelPaciente({
       {comprovante && (
         <section
           aria-labelledby="titulo-comprovante-reserva"
-          className="rounded-2xl border border-[#9ED9B8] bg-white p-6 shadow-xs"
+          className="rounded-xl border border-[#9ED9B8] bg-white p-6"
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E5F5EC] px-3 py-1 text-xs font-bold text-[#00522B]">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E5F5EC] px-3 py-1 text-xs font-semibold text-[#00522B]">
               ✓ Reserva Confirmada
             </span>
-            <span className="font-mono text-xs text-[#495054]">ID: {comprovante.id.slice(0, 8)}</span>
+            <span className="font-sans text-xs text-muted">ID: {comprovante.id.slice(0, 8)}</span>
           </div>
 
-          <h2 id="titulo-comprovante-reserva" className="mt-2 text-lg font-extrabold text-[#002664]">
+          <h2 id="titulo-comprovante-reserva" className="mt-2 text-lg font-semibold text-ink">
             {comprovante.servicoNome} com {comprovante.profissionalNome}
           </h2>
           <p className="mt-1 text-sm font-semibold text-[#00522B] tabular-nums">
@@ -439,14 +424,14 @@ export function PainelPaciente({
             <button
               type="button"
               onClick={() => setAbaAtiva("consultas")}
-              className="min-h-10 rounded-xl bg-[#002664] px-4 py-2 text-xs font-bold text-white hover:bg-[#146CFD]"
+              className="min-h-10 rounded-xl bg-ink px-4 py-2 text-xs font-semibold text-white hover:bg-brand"
             >
               Ver em Minhas Consultas
             </button>
             <button
               type="button"
               onClick={() => setComprovante(null)}
-              className="min-h-10 rounded-xl border border-[#CDD3D9] bg-white px-4 py-2 text-xs font-semibold text-[#495054] hover:bg-[#F2F4F7]"
+              className="min-h-10 rounded-xl border border-input bg-white px-4 py-2 text-xs font-semibold text-muted hover:bg-canvas"
             >
               Fechar
             </button>
@@ -459,12 +444,12 @@ export function PainelPaciente({
           {/* Unified 3-Step Booking Card */}
           <form
             onSubmit={confirmarReserva}
-            className="space-y-6 rounded-2xl border border-[#DDE2E8] bg-white p-5 sm:p-6 lg:col-span-8"
+            className="booking-form space-y-6 rounded-xl border border-line bg-white p-5 sm:p-6 lg:col-span-8"
           >
             {/* 1. Procedimento */}
             <div>
-              <h2 className="text-sm font-extrabold text-[#002664]">
-                1. Escolha o procedimento
+              <h2 className="text-sm font-semibold text-ink">
+                <span className="step-number" aria-hidden="true">1</span> Escolha o procedimento
               </h2>
               <div className="mt-2.5 grid gap-3 sm:grid-cols-2">
                 {servicos.map((s) => {
@@ -475,19 +460,19 @@ export function PainelPaciente({
                       type="button"
                       aria-pressed={ativo}
                       onClick={() => trocarServico(s.id)}
-                      className={`flex flex-col justify-between rounded-xl border p-4 text-left transition-all ${
+                      className={`flex flex-col justify-between rounded-xl border p-4 text-left transition-colors ${
                         ativo
-                          ? "border-2 border-[#146CFD] bg-[#E6F2FD]/60"
-                          : "border-[#DDE2E8] bg-white hover:border-[#002664]"
+                          ? "border-2 border-brand bg-soft/60"
+                          : "border-line bg-white hover:border-ink"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="text-sm font-extrabold text-[#002664]">{s.nome}</span>
-                        <span className="shrink-0 rounded-md bg-[#002664] px-2 py-0.5 text-[11px] font-bold text-white tabular-nums">
+                        <span className="text-sm font-semibold text-ink">{s.nome}</span>
+                        <span className="shrink-0 rounded-md bg-ink px-2 py-0.5 text-[11px] font-semibold text-white tabular-nums">
                           {s.duracaoMinutos} min
                         </span>
                       </div>
-                      <p className="mt-1.5 text-xs text-[#495054]">{s.descricao}</p>
+                      <p className="mt-1.5 text-xs text-muted">{s.descricao}</p>
                     </button>
                   )
                 })}
@@ -495,9 +480,9 @@ export function PainelPaciente({
             </div>
 
             {/* 2. Especialista e Data */}
-            <div className="border-t border-[#EBEBEB] pt-5">
-              <h2 className="text-sm font-extrabold text-[#002664]">
-                2. Especialista e data
+            <div className="border-t border-line pt-5">
+              <h2 className="text-sm font-semibold text-ink">
+                <span className="step-number" aria-hidden="true">2</span> Especialista e data
               </h2>
 
               <div className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
@@ -509,16 +494,16 @@ export function PainelPaciente({
                       type="button"
                       aria-pressed={ativo}
                       onClick={() => setProfissionalId(p.id)}
-                      className={`rounded-xl border p-3.5 text-left transition-all ${
+                      className={`rounded-xl border p-3.5 text-left transition-colors ${
                         ativo
-                          ? "border-[#002664] bg-[#002664] text-white"
-                          : "border-[#DDE2E8] bg-white text-[#22272B] hover:border-[#146CFD]"
+                          ? "border-ink bg-ink text-white"
+                          : "border-line bg-white text-ink hover:border-brand"
                       }`}
                     >
-                      <span className="block text-sm font-bold">{p.nome}</span>
+                      <span className="block text-sm font-semibold">{p.nome}</span>
                       <span
                         className={`mt-0.5 block text-[11px] ${
-                          ativo ? "text-[#CBEDFD]" : "text-[#495054]"
+                          ativo ? "text-tint" : "text-muted"
                         }`}
                       >
                         {p.especialidade}
@@ -538,10 +523,10 @@ export function PainelPaciente({
                         key={d.iso}
                         type="button"
                         onClick={() => setDataISO(d.iso)}
-                        className={`min-h-10 rounded-lg border px-3 py-1.5 text-xs font-bold capitalize transition-colors ${
+                        className={`min-h-10 rounded-lg border px-3 py-1.5 text-xs font-semibold capitalize transition-colors ${
                           ativo
-                            ? "border-[#146CFD] bg-[#146CFD] text-white"
-                            : "border-[#DDE2E8] bg-[#F8FAFC] text-[#22272B] hover:border-[#002664]"
+                            ? "border-brand bg-brand text-white"
+                            : "border-line bg-canvas text-ink hover:border-ink"
                         }`}
                       >
                         {d.rotulo}
@@ -560,25 +545,25 @@ export function PainelPaciente({
                     required
                     value={dataISO}
                     onChange={(e) => setDataISO(e.target.value)}
-                    className="min-h-10 rounded-lg border border-[#CDD3D9] bg-white px-3 py-1.5 text-xs font-bold text-[#002664]"
+                    className="min-h-10 rounded-lg border border-input bg-white px-3 py-1.5 text-xs font-semibold text-ink"
                   />
                 </div>
               </div>
             </div>
 
             {/* 3. Horários Livres */}
-            <div className="border-t border-[#EBEBEB] pt-5">
+            <div className="border-t border-line pt-5">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-extrabold text-[#002664]">
-                  3. Horários disponíveis
+                <h2 className="text-sm font-semibold text-ink">
+                  <span className="step-number" aria-hidden="true">3</span> Horários disponíveis
                 </h2>
-                <span className="text-[11px] font-medium text-[#495054]">
+                <span className="text-[11px] font-medium text-muted">
                   Horário de Brasília
                 </span>
               </div>
 
               {carregandoHorarios ? (
-                <div className="mt-3 rounded-xl bg-[#F4F6F9] p-4 text-xs font-medium text-[#495054]">
+                <div className="mt-3 rounded-xl bg-canvas p-4 text-xs font-medium text-muted">
                   Consultando agenda...
                 </div>
               ) : horariosISO.length === 0 ? (
@@ -597,10 +582,10 @@ export function PainelPaciente({
                         type="button"
                         aria-pressed={selecionado}
                         onClick={() => setHorarioEscolhidoISO(iso)}
-                        className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-extrabold tabular-nums transition-all ${
+                        className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-semibold tabular-nums transition-colors ${
                           selecionado
-                            ? "border-[#002664] bg-[#002664] text-white shadow-xs"
-                            : "border-[#DDE2E8] bg-[#F8FAFC] text-[#002664] hover:border-[#146CFD] hover:bg-[#E6F2FD]/50"
+                            ? "border-ink bg-ink text-white "
+                            : "border-line bg-canvas text-ink hover:border-brand hover:bg-soft/50"
                         }`}
                       >
                         {rotuloHora}
@@ -613,38 +598,38 @@ export function PainelPaciente({
           </form>
 
           {/* Sticky Summary Card */}
-          <aside className="space-y-4 lg:col-span-4">
-            <div className="rounded-2xl border border-[#DDE2E8] bg-white p-5 sm:p-6">
-              <h2 className="text-base font-extrabold text-[#002664]">Resumo da Reserva</h2>
+          <aside className="booking-summary space-y-4 lg:col-span-4">
+            <div className="rounded-xl border border-line bg-white p-5 sm:p-6">
+              <h2 className="text-base font-semibold text-ink">Resumo da Reserva</h2>
 
-              <dl className="mt-4 space-y-3 border-y border-[#EBEBEB] py-4 text-xs">
+              <dl className="mt-4 space-y-3 border-y border-line py-4 text-xs">
                 <div className="flex justify-between gap-2">
-                  <dt className="text-[#495054]">Paciente</dt>
-                  <dd className="font-bold text-[#22272B]">{paciente.nome}</dd>
+                  <dt className="text-muted">Paciente</dt>
+                  <dd className="font-semibold text-ink">{paciente.nome}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-[#495054]">Procedimento</dt>
-                  <dd className="text-right font-bold text-[#002664]">
+                  <dt className="text-muted">Procedimento</dt>
+                  <dd className="text-right font-semibold text-ink">
                     {servicoSelecionado?.nome ?? "—"} ({servicoSelecionado?.duracaoMinutos ?? 60}m)
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-[#495054]">Especialista</dt>
-                  <dd className="text-right font-bold text-[#22272B]">
+                  <dt className="text-muted">Especialista</dt>
+                  <dd className="text-right font-semibold text-ink">
                     {profissionalSelecionado?.nome ?? "—"}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-[#495054]">Data e hora</dt>
-                  <dd className="text-right font-extrabold text-[#146CFD] tabular-nums">
+                  <dt className="text-muted">Data e hora</dt>
+                  <dd className="text-right font-semibold text-brand tabular-nums">
                     {horarioEscolhidoISO
                       ? formatarDataHoraClinica(new Date(horarioEscolhidoISO))
                       : "Escolha um horário"}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-[#495054]">Taxa online</dt>
-                  <dd className="font-bold text-[#00522B]">Gratuito</dd>
+                  <dt className="text-muted">Taxa online</dt>
+                  <dd className="font-semibold text-[#00522B]">Gratuito</dd>
                 </div>
               </dl>
 
@@ -652,26 +637,26 @@ export function PainelPaciente({
                 type="button"
                 disabled={isPending || !horarioEscolhidoISO}
                 onClick={confirmarReserva}
-                className="mt-5 min-h-12 w-full rounded-xl bg-[#146CFD] px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#002664] disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-5 min-h-12 w-full rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isPending ? "Confirmando..." : "Confirmar Agendamento"}
               </button>
 
-              <p className="mt-3 text-center text-[11px] text-[#495054]">
+              <p className="mt-3 text-center text-[11px] text-muted">
                 Remarcação ou cancelamento livres pelo app.
               </p>
             </div>
 
             {consultasFuturas.length > 0 && (
-              <div className="rounded-2xl border border-[#DDE2E8] bg-white p-5">
+              <div className="rounded-xl border border-line bg-white p-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#002664]">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-ink">
                     Próxima Consulta ({consultasFuturas.length})
                   </h3>
                   <button
                     type="button"
                     onClick={() => setAbaAtiva("consultas")}
-                    className="text-xs font-bold text-[#146CFD] hover:underline"
+                    className="text-xs font-semibold text-brand hover:underline"
                   >
                     Gerenciar
                   </button>
@@ -680,11 +665,11 @@ export function PainelPaciente({
                   {consultasFuturas.slice(0, 2).map((c) => (
                     <div
                       key={c.id}
-                      className="rounded-xl bg-[#F4F6F9] p-3 text-xs"
+                      className="rounded-xl bg-canvas p-3 text-xs"
                     >
-                      <p className="font-bold text-[#002664]">{c.servicoNome}</p>
-                      <p className="text-[#495054]">{c.profissionalNome}</p>
-                      <p className="mt-1 font-bold text-[#004047] tabular-nums">
+                      <p className="font-semibold text-ink">{c.servicoNome}</p>
+                      <p className="text-muted">{c.profissionalNome}</p>
+                      <p className="mt-1 font-semibold text-ink tabular-nums">
                         {formatarDataHoraClinica(new Date(c.inicioISO))}
                       </p>
                     </div>
@@ -699,19 +684,19 @@ export function PainelPaciente({
       {abaAtiva === "consultas" && (
         <div className="space-y-6">
           <section aria-labelledby="titulo-consultas-futuras" className="space-y-3">
-            <h2 id="titulo-consultas-futuras" className="text-base font-extrabold text-[#002664]">
+            <h2 id="titulo-consultas-futuras" className="text-base font-semibold text-ink">
               Próximas Consultas ({consultasFuturas.length})
             </h2>
 
             {consultasFuturas.length === 0 ? (
-              <div className="rounded-2xl border border-[#DDE2E8] bg-white p-6 text-sm text-[#495054]">
+              <div className="rounded-xl border border-line bg-white p-6 text-sm text-muted">
                 Nenhuma consulta futura agendada.{" "}
                 <button
                   type="button"
                   onClick={() => setAbaAtiva("agendar")}
-                  className="font-bold text-[#146CFD] underline"
+                  className="font-semibold text-brand underline"
                 >
-                  Agendar agora
+                  Nova consulta
                 </button>
               </div>
             ) : (
@@ -724,22 +709,22 @@ export function PainelPaciente({
                   return (
                     <article
                       key={consulta.id}
-                      className="rounded-2xl border border-[#DDE2E8] bg-white p-5"
+                      className="rounded-xl border border-line bg-white p-5"
                     >
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="rounded-lg bg-[#002664] px-2.5 py-1 text-xs font-bold text-white tabular-nums">
+                            <span className="rounded-lg bg-ink px-2.5 py-1 text-xs font-semibold text-white tabular-nums">
                               {formatarDataCurtaClinica(inicioDate)} •{" "}
                               {formatarIntervaloHorarioClinica(inicioDate, fimDate)}
                             </span>
                             <BadgeSituacao situacao={consulta.situacao} />
                             <BadgePresenca confirmada={consulta.presencaConfirmada} />
                           </div>
-                          <h3 className="pt-1 text-base font-extrabold text-[#002664]">
+                          <h3 className="pt-1 text-base font-semibold text-ink">
                             {consulta.servicoNome} ({consulta.duracaoMinutos} min)
                           </h3>
-                          <p className="text-xs text-[#495054]">
+                          <p className="text-xs text-muted">
                             {consulta.profissionalNome} • {consulta.profissionalEspecialidade}
                           </p>
                         </div>
@@ -749,7 +734,7 @@ export function PainelPaciente({
                             <button
                               type="button"
                               onClick={() => abrirPainelRemarcacao(consulta)}
-                              className="min-h-10 rounded-xl border border-[#002664] bg-white px-4 py-2 text-xs font-bold text-[#002664] hover:bg-[#E6F2FD]"
+                              className="min-h-10 rounded-xl border border-ink bg-white px-4 py-2 text-xs font-semibold text-ink hover:bg-soft"
                             >
                               Remarcar
                             </button>
@@ -760,7 +745,7 @@ export function PainelPaciente({
                                 setCancelandoId(consulta.id)
                                 setMotivoCancelamento("")
                               }}
-                              className="min-h-10 rounded-xl border border-[#F1B2C0] bg-white px-4 py-2 text-xs font-bold text-[#8A0D29] hover:bg-[#FBE9ED]"
+                              className="min-h-10 rounded-xl border border-[#F1B2C0] bg-white px-4 py-2 text-xs font-semibold text-[#8A0D29] hover:bg-[#FBE9ED]"
                             >
                               Cancelar
                             </button>
@@ -769,15 +754,15 @@ export function PainelPaciente({
                       </div>
 
                       {remarcandoId === consulta.id && (
-                        <div className="mt-4 rounded-xl border border-[#B8D8FA] bg-[#E6F2FD]/50 p-4">
-                          <h4 className="text-xs font-extrabold text-[#002664]">
+                        <div className="mt-4 rounded-xl border border-input bg-soft/50 p-4">
+                          <h4 className="text-xs font-semibold text-ink">
                             Escolher novo horário com {consulta.profissionalNome}
                           </h4>
                           <div className="mt-3 grid gap-3 sm:grid-cols-2">
                             <div>
                               <label
                                 htmlFor={`remarcar-data-${consulta.id}`}
-                                className="block text-xs font-semibold text-[#002664]"
+                                className="block text-xs font-semibold text-ink"
                               >
                                 Nova data
                               </label>
@@ -786,21 +771,21 @@ export function PainelPaciente({
                                 type="date"
                                 value={dataRemarcacaoISO}
                                 onChange={(e) => alterarDataRemarcacao(consulta, e.target.value)}
-                                className="mt-1 min-h-10 w-full rounded-lg border border-[#CDD3D9] bg-white px-3 py-1.5 text-xs font-bold text-[#22272B]"
+                                className="mt-1 min-h-10 w-full rounded-lg border border-input bg-white px-3 py-1.5 text-xs font-semibold text-ink"
                               />
                             </div>
 
                             <div>
                               <label
                                 htmlFor={`remarcar-hora-${consulta.id}`}
-                                className="block text-xs font-semibold text-[#002664]"
+                                className="block text-xs font-semibold text-ink"
                               >
                                 Novo horário livre
                               </label>
                               {carregandoRemarcacao ? (
-                                <p className="mt-2 text-xs text-[#495054]">Consultando...</p>
+                                <p className="mt-2 text-xs text-muted">Consultando...</p>
                               ) : horariosRemarcacaoISO.length === 0 ? (
-                                <p className="mt-2 text-xs font-bold text-[#8A0D29]">
+                                <p className="mt-2 text-xs font-semibold text-[#8A0D29]">
                                   Sem horários nesta data.
                                 </p>
                               ) : (
@@ -808,7 +793,7 @@ export function PainelPaciente({
                                   id={`remarcar-hora-${consulta.id}`}
                                   value={horarioNovoRemarcacaoISO}
                                   onChange={(e) => setHorarioNovoRemarcacaoISO(e.target.value)}
-                                  className="mt-1 min-h-10 w-full rounded-lg border border-[#CDD3D9] bg-white px-3 py-1.5 text-xs font-bold text-[#22272B]"
+                                  className="mt-1 min-h-10 w-full rounded-lg border border-input bg-white px-3 py-1.5 text-xs font-semibold text-ink"
                                 >
                                   {horariosRemarcacaoISO.map((iso) => (
                                     <option key={iso} value={iso}>
@@ -825,14 +810,14 @@ export function PainelPaciente({
                               type="button"
                               disabled={isPending || !horarioNovoRemarcacaoISO}
                               onClick={() => submeterRemarcacao(consulta.id)}
-                              className="min-h-10 rounded-lg bg-[#002664] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#146CFD] disabled:opacity-50"
+                              className="min-h-10 rounded-lg bg-ink px-4 py-1.5 text-xs font-semibold text-white hover:bg-brand disabled:opacity-50"
                             >
                               Salvar novo horário
                             </button>
                             <button
                               type="button"
                               onClick={() => setRemarcandoId(null)}
-                              className="min-h-10 rounded-lg border border-[#CDD3D9] bg-white px-3 py-1.5 text-xs font-semibold text-[#495054]"
+                              className="min-h-10 rounded-lg border border-input bg-white px-3 py-1.5 text-xs font-semibold text-muted"
                             >
                               Fechar
                             </button>
@@ -844,7 +829,7 @@ export function PainelPaciente({
                         <div className="mt-4 rounded-xl border border-[#F1B2C0] bg-[#FBE9ED]/60 p-4">
                           <label
                             htmlFor={`motivo-cancelamento-${consulta.id}`}
-                            className="block text-xs font-bold text-[#8A0D29]"
+                            className="block text-xs font-semibold text-[#8A0D29]"
                           >
                             Motivo do cancelamento (obrigatório)
                           </label>
@@ -855,7 +840,7 @@ export function PainelPaciente({
                             value={motivoCancelamento}
                             onChange={(e) => setMotivoCancelamento(e.target.value)}
                             placeholder="Ex.: Imprevisto no trabalho"
-                            className="mt-1 min-h-10 w-full rounded-lg border border-[#F1B2C0] bg-white px-3 py-1.5 text-xs text-[#22272B]"
+                            className="mt-1 min-h-10 w-full rounded-lg border border-[#F1B2C0] bg-white px-3 py-1.5 text-xs text-ink"
                           />
 
                           <div className="mt-3 flex flex-wrap gap-2">
@@ -863,14 +848,14 @@ export function PainelPaciente({
                               type="button"
                               disabled={isPending || motivoCancelamento.trim().length === 0}
                               onClick={() => submeterCancelamento(consulta.id)}
-                              className="min-h-10 rounded-lg bg-[#D7153A] px-4 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+                              className="min-h-10 rounded-lg bg-[#D7153A] px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
                             >
                               Confirmar cancelamento
                             </button>
                             <button
                               type="button"
                               onClick={() => setCancelandoId(null)}
-                              className="min-h-10 rounded-lg border border-[#CDD3D9] bg-white px-3 py-1.5 text-xs font-semibold text-[#495054]"
+                              className="min-h-10 rounded-lg border border-input bg-white px-3 py-1.5 text-xs font-semibold text-muted"
                             >
                               Voltar
                             </button>
@@ -886,21 +871,21 @@ export function PainelPaciente({
 
           {consultasHistorico.length > 0 && (
             <section aria-labelledby="titulo-historico-paciente" className="space-y-3">
-              <h2 id="titulo-historico-paciente" className="text-sm font-extrabold text-[#495054]">
+              <h2 id="titulo-historico-paciente" className="text-sm font-semibold text-muted">
                 Histórico Anterior ({consultasHistorico.length})
               </h2>
 
-              <div className="divide-y divide-[#EBEBEB] rounded-2xl border border-[#DDE2E8] bg-white">
+              <div className="divide-y divide-line rounded-xl border border-line bg-white">
                 {consultasHistorico.map((consulta) => (
                   <div
                     key={consulta.id}
                     className="flex flex-wrap items-center justify-between gap-2 p-4"
                   >
                     <div>
-                      <p className="text-sm font-bold text-[#002664]">
+                      <p className="text-sm font-semibold text-ink">
                         {consulta.servicoNome} • {consulta.profissionalNome}
                       </p>
-                      <p className="text-xs text-[#495054] tabular-nums">
+                      <p className="text-xs text-muted tabular-nums">
                         {formatarDataHoraClinica(new Date(consulta.inicioISO))}
                       </p>
                     </div>
@@ -916,18 +901,18 @@ export function PainelPaciente({
       {abaAtiva === "dados" && (
         <section
           aria-labelledby="titulo-dados-cadastrais"
-          className="max-w-lg rounded-2xl border border-[#DDE2E8] bg-white p-6"
+          className="max-w-lg rounded-xl border border-line bg-white p-6"
         >
-          <h2 id="titulo-dados-cadastrais" className="text-base font-extrabold text-[#002664]">
+          <h2 id="titulo-dados-cadastrais" className="text-base font-semibold text-ink">
             Meus Dados de Contato
           </h2>
-          <p className="mt-1 text-xs text-[#495054]">
+          <p className="mt-1 text-xs text-muted">
             Usados apenas para identificação e confirmação de presença (LGPD).
           </p>
 
           <form onSubmit={submeterDadosBasicos} className="mt-4 space-y-4">
             <div>
-              <label htmlFor="paciente-nome" className="block text-xs font-bold text-[#22272B]">
+              <label htmlFor="paciente-nome" className="block text-xs font-semibold text-ink">
                 Nome completo
               </label>
               <input
@@ -937,12 +922,12 @@ export function PainelPaciente({
                 maxLength={120}
                 value={nomeDados}
                 onChange={(e) => setNomeDados(e.target.value)}
-                className="mt-1 min-h-10 w-full rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-sm text-[#22272B]"
+                className="mt-1 min-h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink"
               />
             </div>
 
             <div>
-              <label htmlFor="paciente-email" className="block text-xs font-bold text-[#22272B]">
+              <label htmlFor="paciente-email" className="block text-xs font-semibold text-ink">
                 E-mail
               </label>
               <input
@@ -952,12 +937,12 @@ export function PainelPaciente({
                 maxLength={160}
                 value={emailDados}
                 onChange={(e) => setEmailDados(e.target.value)}
-                className="mt-1 min-h-10 w-full rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-sm text-[#22272B]"
+                className="mt-1 min-h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink"
               />
             </div>
 
             <div>
-              <label htmlFor="paciente-telefone" className="block text-xs font-bold text-[#22272B]">
+              <label htmlFor="paciente-telefone" className="block text-xs font-semibold text-ink">
                 Telefone / WhatsApp
               </label>
               <input
@@ -967,14 +952,14 @@ export function PainelPaciente({
                 maxLength={40}
                 value={telefoneDados}
                 onChange={(e) => setTelefoneDados(e.target.value)}
-                className="mt-1 min-h-10 w-full rounded-xl border border-[#CDD3D9] bg-white px-3 py-2 text-sm text-[#22272B]"
+                className="mt-1 min-h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm text-ink"
               />
             </div>
 
             <button
               type="submit"
               disabled={isPending}
-              className="min-h-11 w-full rounded-xl bg-[#002664] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#146CFD]"
+              className="min-h-11 w-full rounded-xl bg-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand"
             >
               {isPending ? "Salvando..." : "Salvar Alterações"}
             </button>

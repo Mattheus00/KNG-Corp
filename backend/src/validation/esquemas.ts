@@ -59,6 +59,19 @@ export const esquemaCadastroPacienteRecepcao = z.object({
   email: z.string().trim().max(160).optional(),
 })
 
+export const esquemaCadastroClinica = z.object({
+  nome: z.string().trim().min(3).max(80),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(3)
+    .max(40)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  responsavelNome: z.string().trim().min(3).max(120),
+  responsavelEmail: z.email().max(160),
+})
+
 export const esquemaConviteFuncionario = z.object({
   nome: z.string().trim().min(3).max(120),
   email: z.email().max(160),
@@ -74,6 +87,7 @@ export type PedidoConfirmarPresenca = z.infer<typeof esquemaPedidoConfirmarPrese
 export type CadastroPacientePublico = z.infer<typeof esquemaCadastroPacientePublico>
 export type AtualizacaoPaciente = z.infer<typeof esquemaAtualizacaoPaciente>
 export type CadastroPacienteRecepcao = z.infer<typeof esquemaCadastroPacienteRecepcao>
+export type CadastroClinica = z.infer<typeof esquemaCadastroClinica>
 export type ConviteFuncionario = z.infer<typeof esquemaConviteFuncionario>
 
 export function lerPedidoAgendamento(entrada: unknown): Resultado<PedidoAgendamento> {
@@ -110,6 +124,10 @@ export function lerAtualizacaoPaciente(entrada: unknown): Resultado<AtualizacaoP
 
 export function lerCadastroPacienteRecepcao(entrada: unknown): Resultado<CadastroPacienteRecepcao> {
   return ler(esquemaCadastroPacienteRecepcao, entrada, "Os dados do paciente são inválidos.")
+}
+
+export function lerCadastroClinica(entrada: unknown): Resultado<CadastroClinica> {
+  return ler(esquemaCadastroClinica, entrada, "Verifique o nome da clínica, o endereço e os dados do responsável.")
 }
 
 export function lerConviteFuncionario(entrada: unknown): Resultado<ConviteFuncionario> {

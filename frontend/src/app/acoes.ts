@@ -16,6 +16,7 @@ import {
   executarConfirmacaoPresencaSessao,
   executarMudancaSituacaoSessao,
   executarRemarcacaoSessao,
+  cadastrarClinicaSessao,
   obterCenarioSessao,
   removerBloqueioSessao,
   restaurarCenarioSessao,
@@ -23,7 +24,8 @@ import {
 } from "@sgc/backend/data"
 import type { Papel, SituacaoAtendimento } from "@sgc/backend/domain"
 import { revalidatePath } from "next/cache"
-import { lerSessaoId } from "@/lib/sessao"
+import { redirect } from "next/navigation"
+import { lerClinicaSlug, lerSessaoId } from "@/lib/sessao"
 
 export type RespostaAcao<T = null> =
   | { ok: true; mensagem: string; dados?: T }
@@ -34,58 +36,68 @@ export type RespostaAcao<T = null> =
       campos?: readonly { campo: string; mensagem: string }[]
     }
 
-function revalidarTudo() {
-  revalidatePath("/")
-  revalidatePath("/acesso")
-  revalidatePath("/paciente")
-  revalidatePath("/recepcao")
-  revalidatePath("/dentista")
-  revalidatePath("/gestor")
+function revalidarClinica(slug: string) {
+  revalidatePath(`/c/${slug}`)
+}
+
+async function escopoAtual() {
+  const sessaoId = await lerSessaoId()
+  const clinicaSlug = await lerClinicaSlug()
+  return { sessaoId, clinicaSlug }
+}
+
+function rotaDaClinica(slug: string, rota: string) {
+  if (rota.startsWith("/c/")) return rota
+  return `/c/${slug}${rota.startsWith("/") ? rota : `/${rota}`}`
 }
 
 export async function acaoAlternarPerfilDemo(
   contaId: string,
 ): Promise<RespostaAcao<{ rotaInicial: string; nome: string }>> {
-  const sessaoId = await lerSessaoId()
-  const resultado = alternarContaDemonstrativa(sessaoId, contaId)
+  const escopo = await escopoAtual()
+  const resultado = alternarContaDemonstrativa(escopo, contaId)
   if (!resultado.ok) {
     return { ok: false, mensagem: resultado.erro.mensagem, codigo: resultado.erro.codigo }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: `Perfil ativo alterado para ${resultado.valor.nome} (${resultado.valor.rotuloPerfil}).`,
     dados: {
-      rotaInicial: resultado.valor.rotaInicial,
+      rotaInicial: rotaDaClinica(escopo.clinicaSlug, resultado.valor.rotaInicial),
       nome: resultado.valor.nome,
     },
   }
 }
 
-export async function acaoRestaurarDemonstracao(): Promise<RespostaAcao> {
-  const sessaoId = await lerSessaoId()
-  const atual = obterCenarioSessao(sessaoId)
-  restaurarCenarioSessao(sessaoId, atual.atorAtual.id)
-  revalidarTudo()
+export async function acaoRestaurarDemonstracao(): Promise<RespostaAcao<{ rotaInicial: string }>> {
+  const escopo = await escopoAtual()
+  const atual = obterCenarioSessao(escopo)
+  restaurarCenarioSessao(escopo, atual?.atorAtual.id)
+  revalidarClinica("aurora")
   return {
     ok: true,
     mensagem: "Os dados fictícios desta sessão demonstrativa foram restaurados ao estado inicial.",
+    dados: { rotaInicial: "/c/aurora" },
   }
 }
 
 export async function acaoLoginEmailDemo(
   email: string,
 ): Promise<RespostaAcao<{ rotaInicial: string; nome: string }>> {
-  const sessaoId = await lerSessaoId()
-  const resultado = autenticarPorEmailDemo(sessaoId, email)
+  const escopo = await escopoAtual()
+  const resultado = autenticarPorEmailDemo(escopo, email)
   if (!resultado.ok) {
     return { ok: false, mensagem: resultado.erro.mensagem, codigo: resultado.erro.codigo }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: `Acesso iniciado como ${resultado.valor.nome}.`,
-    dados: resultado.valor,
+    dados: {
+      nome: resultado.valor.nome,
+      rotaInicial: rotaDaClinica(escopo.clinicaSlug, resultado.valor.rotaInicial),
+    },
   }
 }
 
@@ -95,8 +107,8 @@ export async function acaoCadastrarPacientePublico(entrada: {
   telefone: string
   aceitouTermos: boolean
 }): Promise<RespostaAcao<{ pacienteId: string; rotaInicial: string }>> {
-  const sessaoId = await lerSessaoId()
-  const resultado = cadastrarContaPacientePublico(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = cadastrarContaPacientePublico(escopo, entrada)
   if (!resultado.ok) {
     return {
       ok: false,
@@ -105,11 +117,14 @@ export async function acaoCadastrarPacientePublico(entrada: {
       campos: resultado.erro.campos,
     }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: "Cadastro concluído com perfil de Paciente. Você já pode agendar sua avaliação.",
-    dados: { pacienteId: resultado.valor.id, rotaInicial: "/paciente" },
+    dados: {
+      pacienteId: resultado.valor.id,
+      rotaInicial: rotaDaClinica(escopo.clinicaSlug, "/paciente"),
+    },
   }
 }
 
@@ -119,12 +134,12 @@ export async function acaoAtualizarDadosPaciente(entrada: {
   email: string
   telefone: string
 }): Promise<RespostaAcao> {
-  const sessaoId = await lerSessaoId()
-  const resultado = atualizarDadosBasicosPaciente(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = atualizarDadosBasicosPaciente(escopo, entrada)
   if (!resultado.ok) {
     return { ok: false, mensagem: resultado.erro.mensagem, codigo: resultado.erro.codigo }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: "Dados básicos de contato atualizados com sucesso.",
@@ -136,12 +151,12 @@ export async function acaoCadastrarPacienteRecepcao(entrada: {
   telefone: string
   email?: string
 }): Promise<RespostaAcao<{ pacienteId: string; nome: string }>> {
-  const sessaoId = await lerSessaoId()
-  const resultado = cadastrarPacientePelaRecepcao(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = cadastrarPacientePelaRecepcao(escopo, entrada)
   if (!resultado.ok) {
     return { ok: false, mensagem: resultado.erro.mensagem, codigo: resultado.erro.codigo }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: `Paciente ${resultado.valor.nome} cadastrado para atendimento operacional.`,
@@ -155,8 +170,8 @@ export async function acaoConsultarHorariosDisponiveis(entrada: {
   dataISO: string
   ignorarAgendamentoId?: string
 }): Promise<RespostaAcao<string[]>> {
-  const sessaoId = await lerSessaoId()
-  const resultado = consultarHorariosDisponiveisNoDia(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = consultarHorariosDisponiveisNoDia(escopo, entrada)
   if (!resultado.ok) {
     return { ok: false, mensagem: resultado.erro.mensagem, codigo: resultado.erro.codigo }
   }
@@ -181,8 +196,8 @@ export async function acaoAgendarConsulta(entrada: {
     servicoId: string
   }>
 > {
-  const sessaoId = await lerSessaoId()
-  const resultado = await executarAgendamentoSessao(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = await executarAgendamentoSessao(escopo, entrada)
   if (!resultado.ok) {
     return {
       ok: false,
@@ -191,7 +206,7 @@ export async function acaoAgendarConsulta(entrada: {
       campos: resultado.erro.campos,
     }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: "Reserva confirmada com sucesso.",
@@ -209,8 +224,8 @@ export async function acaoRemarcarConsulta(entrada: {
   agendamentoId: string
   inicio: string
 }): Promise<RespostaAcao<{ id: string; inicioISO: string; fimISO: string }>> {
-  const sessaoId = await lerSessaoId()
-  const resultado = await executarRemarcacaoSessao(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = await executarRemarcacaoSessao(escopo, entrada)
   if (!resultado.ok) {
     return {
       ok: false,
@@ -219,7 +234,7 @@ export async function acaoRemarcarConsulta(entrada: {
       campos: resultado.erro.campos,
     }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem:
@@ -236,8 +251,8 @@ export async function acaoCancelarConsulta(entrada: {
   agendamentoId: string
   motivo: string
 }): Promise<RespostaAcao> {
-  const sessaoId = await lerSessaoId()
-  const resultado = await executarCancelamentoSessao(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = await executarCancelamentoSessao(escopo, entrada)
   if (!resultado.ok) {
     return {
       ok: false,
@@ -246,7 +261,7 @@ export async function acaoCancelarConsulta(entrada: {
       campos: resultado.erro.campos,
     }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: "Consulta cancelada e horário liberado na agenda.",
@@ -258,8 +273,8 @@ export async function acaoAlterarSituacaoAtendimento(entrada: {
   situacao: SituacaoAtendimento
   motivo?: string | null
 }): Promise<RespostaAcao> {
-  const sessaoId = await lerSessaoId()
-  const resultado = await executarMudancaSituacaoSessao(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = await executarMudancaSituacaoSessao(escopo, entrada)
   if (!resultado.ok) {
     return {
       ok: false,
@@ -267,7 +282,7 @@ export async function acaoAlterarSituacaoAtendimento(entrada: {
       codigo: resultado.erro.codigo,
     }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: "Situação do atendimento atualizada com sucesso.",
@@ -275,8 +290,8 @@ export async function acaoAlterarSituacaoAtendimento(entrada: {
 }
 
 export async function acaoConfirmarPresenca(agendamentoId: string): Promise<RespostaAcao> {
-  const sessaoId = await lerSessaoId()
-  const resultado = await executarConfirmacaoPresencaSessao(sessaoId, agendamentoId)
+  const escopo = await escopoAtual()
+  const resultado = await executarConfirmacaoPresencaSessao(escopo, agendamentoId)
   if (!resultado.ok) {
     return {
       ok: false,
@@ -284,7 +299,7 @@ export async function acaoConfirmarPresenca(agendamentoId: string): Promise<Resp
       codigo: resultado.erro.codigo,
     }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: "Presença confirmada para o horário vigente.",
@@ -297,12 +312,12 @@ export async function acaoConvidarFuncionario(entrada: {
   papeis: Papel[]
   especialidade?: string
 }): Promise<RespostaAcao> {
-  const sessaoId = await lerSessaoId()
-  const resultado = convidarFuncionarioSessao(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = convidarFuncionarioSessao(escopo, entrada)
   if (!resultado.ok) {
     return { ok: false, mensagem: resultado.erro.mensagem, codigo: resultado.erro.codigo }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: `Convite registrado para ${resultado.valor.nome} (${resultado.valor.papeis.join(", ")}).`,
@@ -322,12 +337,12 @@ export async function acaoAlterarStatusFuncionario(entrada: {
     }>
   }>
 > {
-  const sessaoId = await lerSessaoId()
-  const resultado = alterarStatusFuncionarioSessao(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = alterarStatusFuncionarioSessao(escopo, entrada)
   if (!resultado.ok) {
     return { ok: false, mensagem: resultado.erro.mensagem, codigo: resultado.erro.codigo }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   const qtdAfetadas = resultado.valor.consultasFuturasAfetadas.length
   const sufixoAfetadas =
     !entrada.ativo && qtdAfetadas > 0
@@ -357,12 +372,12 @@ export async function acaoSalvarServico(entrada: {
   disponivelParaAutoagendamento: boolean
   profissionaisHabilitados: string[]
 }): Promise<RespostaAcao> {
-  const sessaoId = await lerSessaoId()
-  const resultado = salvarServicoSessao(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = salvarServicoSessao(escopo, entrada)
   if (!resultado.ok) {
     return { ok: false, mensagem: resultado.erro.mensagem, codigo: resultado.erro.codigo }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: `Serviço "${resultado.valor.nome}" (${resultado.valor.duracaoMinutos} min) adicionado.`,
@@ -374,12 +389,12 @@ export async function acaoAtualizarExpediente(entrada: {
   aberturaHora: number
   fechamentoHora: number
 }): Promise<RespostaAcao> {
-  const sessaoId = await lerSessaoId()
-  const resultado = atualizarExpedienteProfissionalSessao(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = atualizarExpedienteProfissionalSessao(escopo, entrada)
   if (!resultado.ok) {
     return { ok: false, mensagem: resultado.erro.mensagem, codigo: resultado.erro.codigo }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: `Expediente de ${resultado.valor.nome} atualizado para ${String(
@@ -395,25 +410,44 @@ export async function acaoAdicionarBloqueio(entrada: {
   horaFim: number
   motivo: string
 }): Promise<RespostaAcao> {
-  const sessaoId = await lerSessaoId()
-  const resultado = adicionarBloqueioSessao(sessaoId, entrada)
+  const escopo = await escopoAtual()
+  const resultado = adicionarBloqueioSessao(escopo, entrada)
   if (!resultado.ok) {
     return { ok: false, mensagem: resultado.erro.mensagem, codigo: resultado.erro.codigo }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: "Bloqueio de agenda registrado com sucesso.",
   }
 }
 
-export async function acaoRemoverBloqueio(bloqueioId: string): Promise<RespostaAcao> {
+export async function acaoCadastrarClinica(entrada: {
+  nome: string
+  slug: string
+  responsavelNome: string
+  responsavelEmail: string
+}): Promise<RespostaAcao> {
   const sessaoId = await lerSessaoId()
-  const resultado = removerBloqueioSessao(sessaoId, bloqueioId)
+  const resultado = cadastrarClinicaSessao(sessaoId, entrada)
+  if (!resultado.ok) {
+    return {
+      ok: false,
+      mensagem: resultado.erro.mensagem,
+      codigo: resultado.erro.codigo,
+      campos: resultado.erro.campos,
+    }
+  }
+  redirect(`/c/${resultado.valor.slug}/gestor`)
+}
+
+export async function acaoRemoverBloqueio(bloqueioId: string): Promise<RespostaAcao> {
+  const escopo = await escopoAtual()
+  const resultado = removerBloqueioSessao(escopo, bloqueioId)
   if (!resultado.ok) {
     return { ok: false, mensagem: resultado.erro.mensagem, codigo: resultado.erro.codigo }
   }
-  revalidarTudo()
+  revalidarClinica(escopo.clinicaSlug)
   return {
     ok: true,
     mensagem: "Bloqueio removido e disponibilidade restaurada.",

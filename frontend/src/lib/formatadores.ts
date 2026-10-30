@@ -50,7 +50,7 @@ export const METADADOS_SITUACAO: Record<SituacaoAtendimento, MetadadosSituacao> 
   agendado: {
     rotulo: "Agendado",
     descricao: "Horário reservado na agenda do profissional.",
-    classeBadge: "bg-[#E6F2FD] text-[#002664] border-[#B8D8FA]",
+    classeBadge: "bg-soft text-ink border-input",
     simbolo: "●",
   },
   chegou: {
@@ -62,7 +62,7 @@ export const METADADOS_SITUACAO: Record<SituacaoAtendimento, MetadadosSituacao> 
   em_atendimento: {
     rotulo: "Em atendimento",
     descricao: "Atendimento em andamento no consultório.",
-    classeBadge: "bg-[#E3F3F4] text-[#004047] border-[#9AD2D6]",
+    classeBadge: "bg-soft text-ink border-[#9AD2D6]",
     simbolo: "▶",
   },
   concluido: {
@@ -74,7 +74,7 @@ export const METADADOS_SITUACAO: Record<SituacaoAtendimento, MetadadosSituacao> 
   cancelado: {
     rotulo: "Cancelado",
     descricao: "Consulta cancelada com horário liberado na agenda.",
-    classeBadge: "bg-[#F2F4F7] text-[#495054] border-[#CDD3D9]",
+    classeBadge: "bg-canvas text-muted border-input",
     simbolo: "✕",
   },
   falta: {

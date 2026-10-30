@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from "vitest"
 
 vi.mock("server-only", () => ({}))
 
+function aurora(sessaoId: string) {
+  return { sessaoId, clinicaSlug: "aurora" }
+}
+
 import { transicaoPermitida } from "../src/domain/situacao"
 import {
   alterarStatusFuncionarioSessao,
@@ -54,45 +58,44 @@ describe("Auditoria de Cibersegurança — Prevenção de Vulnerabilidades", () 
 
   it("revoga imediatamente permissões quando um funcionário é desativado pelo gestor", async () => {
     const sessao = "sec-test-revogacao-01"
-    restaurarCenarioSessao(sessao)
+    restaurarCenarioSessao(aurora(sessao))
 
     // Gestor desativa o recepcionista Lucas
-    alternarContaDemonstrativa(sessao, ID_GESTOR_ROBERTO)
-    const desativacao = alterarStatusFuncionarioSessao(sessao, {
+    alternarContaDemonstrativa(aurora(sessao), ID_GESTOR_ROBERTO)
+    const desativacao = alterarStatusFuncionarioSessao(aurora(sessao), {
       funcionarioId: ID_RECEPCAO_LUCAS,
       ativo: false,
     })
     expect(desativacao.ok).toBe(true)
 
     // Tentativa de alternar para o funcionário desativado falha
-    const tentativaTroca = alternarContaDemonstrativa(sessao, ID_RECEPCAO_LUCAS)
+    const tentativaTroca = alternarContaDemonstrativa(aurora(sessao), ID_RECEPCAO_LUCAS)
     expect(tentativaTroca.ok).toBe(false)
     if (!tentativaTroca.ok) {
       expect(tentativaTroca.erro.codigo).toBe("sem_permissao")
     }
 
     // Mesmo se a sessão estivesse autenticada como Lucas antes da desativação, garante bloqueio imediato
-    const estado = obterCenarioSessao(sessao)
+    const estado = obterCenarioSessao(aurora(sessao))!
     estado.atorAtual = {
       id: ID_RECEPCAO_LUCAS,
       papeis: ["recepcao"],
       profissionalId: null,
     }
-    const confirmacaoBloqueada = await executarConfirmacaoPresencaSessao(
-      sessao,
+    const confirmacaoBloqueada = await executarConfirmacaoPresencaSessao(aurora(sessao),
       "66666666-6666-4666-8666-666666666605",
     )
     expect(confirmacaoBloqueada.ok).toBe(false)
     if (!confirmacaoBloqueada.ok) {
       expect(confirmacaoBloqueada.erro.codigo).toBe("sem_permissao")
     }
-    expect(listarAgendamentosVisiveis(sessao)).toEqual([])
+    expect(listarAgendamentosVisiveis(aurora(sessao))).toEqual([])
   })
 
   it("impede abuso de reservas em rota pública limitando reservas ativas simultâneas (máx 3) e antecedência (180 dias)", async () => {
     const sessao = "sec-test-limite-reservas-01"
-    restaurarCenarioSessao(sessao)
-    alternarContaDemonstrativa(sessao, ID_PACIENTE_MARIANA)
+    restaurarCenarioSessao(aurora(sessao))
+    alternarContaDemonstrativa(aurora(sessao), ID_PACIENTE_MARIANA)
 
     // Calcula uma segunda-feira futura próxima dentro da janela de 180 dias
     const base = new Date()
@@ -104,7 +107,7 @@ describe("Auditoria de Cibersegurança — Prevenção de Vulnerabilidades", () 
 
     // Mariana já tem 1 consulta futura ativa (66666666-6666-4666-8666-666666666606).
     // 2ª reserva ativa:
-    const r2 = await executarAgendamentoSessao(sessao, {
+    const r2 = await executarAgendamentoSessao(aurora(sessao), {
       pacienteId: ID_PACIENTE_MARIANA,
       profissionalId: ID_PROF_HELENA,
       servicoId: ID_SERVICO_AVALIACAO,
@@ -113,7 +116,7 @@ describe("Auditoria de Cibersegurança — Prevenção de Vulnerabilidades", () 
     expect(r2.ok).toBe(true)
 
     // 3ª reserva ativa:
-    const r3 = await executarAgendamentoSessao(sessao, {
+    const r3 = await executarAgendamentoSessao(aurora(sessao), {
       pacienteId: ID_PACIENTE_MARIANA,
       profissionalId: ID_PROF_HELENA,
       servicoId: ID_SERVICO_AVALIACAO,
@@ -122,7 +125,7 @@ describe("Auditoria de Cibersegurança — Prevenção de Vulnerabilidades", () 
     expect(r3.ok).toBe(true)
 
     // 4ª reserva ativa simultânea deve ser recusada (LIMITE_RESERVAS_ATIVAS_POR_PACIENTE = 3):
-    const r4 = await executarAgendamentoSessao(sessao, {
+    const r4 = await executarAgendamentoSessao(aurora(sessao), {
       pacienteId: ID_PACIENTE_MARIANA,
       profissionalId: ID_PROF_HELENA,
       servicoId: ID_SERVICO_AVALIACAO,
@@ -135,7 +138,7 @@ describe("Auditoria de Cibersegurança — Prevenção de Vulnerabilidades", () 
 
     // Reserva além de 180 dias no futuro também deve ser recusada:
     const muitoDistante = new Date(base.getTime() + 240 * 86_400_000)
-    const rDistante = await executarAgendamentoSessao(sessao, {
+    const rDistante = await executarAgendamentoSessao(aurora(sessao), {
       pacienteId: ID_PACIENTE_MARIANA,
       profissionalId: ID_PROF_HELENA,
       servicoId: ID_SERVICO_AVALIACAO,
@@ -149,10 +152,10 @@ describe("Auditoria de Cibersegurança — Prevenção de Vulnerabilidades", () 
 
   it("aplica minimização de dados (LGPD) ocultando UUIDs internos de funcionários no histórico visível ao paciente", () => {
     const sessao = "sec-test-lgpd-01"
-    restaurarCenarioSessao(sessao)
-    alternarContaDemonstrativa(sessao, ID_PACIENTE_MARIANA)
+    restaurarCenarioSessao(aurora(sessao))
+    alternarContaDemonstrativa(aurora(sessao), ID_PACIENTE_MARIANA)
 
-    const visiveisPaciente = listarAgendamentosVisiveis(sessao)
+    const visiveisPaciente = listarAgendamentosVisiveis(aurora(sessao))
     expect(visiveisPaciente.length).toBeGreaterThan(0)
     for (const ag of visiveisPaciente) {
       expect(ag.pacienteId).toBe(ID_PACIENTE_MARIANA)
@@ -190,19 +193,19 @@ describe("Auditoria de Cibersegurança — Prevenção de Vulnerabilidades", () 
 
   it("bloqueia acesso do paciente ou dentista puro ao painel analítico exclusivo do gestor", async () => {
     const sessao = "sec-test-rbac-gestor-01"
-    restaurarCenarioSessao(sessao)
+    restaurarCenarioSessao(aurora(sessao))
 
-    alternarContaDemonstrativa(sessao, ID_PACIENTE_MARIANA)
-    const resPaciente = obterPainelGestorSessao(sessao)
+    alternarContaDemonstrativa(aurora(sessao), ID_PACIENTE_MARIANA)
+    const resPaciente = obterPainelGestorSessao(aurora(sessao))
     expect(resPaciente.ok).toBe(false)
 
-    alternarContaDemonstrativa(sessao, ID_DENTISTA_HELENA)
-    const resDentista = obterPainelGestorSessao(sessao)
+    alternarContaDemonstrativa(aurora(sessao), ID_DENTISTA_HELENA)
+    const resDentista = obterPainelGestorSessao(aurora(sessao))
     expect(resDentista.ok).toBe(false)
 
     // Paciente tampouco consegue mudar situação para 'chegou' ou 'concluido'
-    alternarContaDemonstrativa(sessao, ID_PACIENTE_MARIANA)
-    const tentativaMudanca = await executarMudancaSituacaoSessao(sessao, {
+    alternarContaDemonstrativa(aurora(sessao), ID_PACIENTE_MARIANA)
+    const tentativaMudanca = await executarMudancaSituacaoSessao(aurora(sessao), {
       agendamentoId: "66666666-6666-4666-8666-666666666606",
       situacao: "concluido",
     })

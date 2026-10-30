@@ -26,7 +26,7 @@ export function BadgePresenca({ confirmada }: { confirmada: boolean }) {
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-[#CDD3D9] bg-[#F2F4F7] px-2.5 py-0.5 text-xs font-medium text-[#495054]">
+    <span className="inline-flex items-center gap-1 rounded-full border border-input bg-canvas px-2.5 py-0.5 text-xs font-medium text-muted">
       <span aria-hidden="true">○</span>
       <span>Não confirmado</span>
     </span>

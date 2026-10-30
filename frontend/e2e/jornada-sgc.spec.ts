@@ -1,57 +1,49 @@
 import { expect, test } from "@playwright/test"
 
 test.describe("Jornadas e permissões do SGC (MVP)", () => {
-  test("site público exibe identificação de demonstração, serviços, equipe e políticas", async ({
-    page,
-  }) => {
+  test("a landing identifica a demonstração e aponta políticas", async ({ page }) => {
     await page.goto("/")
     await expect(
-      page.getByRole("heading", { name: /Clínica Odontológica Aurora/i }),
+      page.getByRole("heading", { name: "Gestão completa para clínicas odontológicas" }),
     ).toBeVisible()
-    await expect(page.getByText(/AMBIENTE DEMONSTRATIVO/i).first()).toBeVisible()
-    await expect(page.getByRole("link", { name: /Política de Privacidade/i })).toBeVisible()
-    await expect(page.getByRole("link", { name: /Termos de Serviço/i })).toBeVisible()
+    await expect(page.getByText("Gratuito durante a fase de demonstração").first()).toBeVisible()
+    await expect(page.getByRole("link", { name: "Privacidade" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Termos" })).toBeVisible()
   })
 
-  test("paciente agenda avaliação com resumo e comprovante e é impedido de acessar painel do gestor sem papel", async ({
-    page,
-  }) => {
-    await page.goto("/paciente")
-    await expect(page.getByRole("heading", { name: /Portal do Paciente/i })).toBeVisible()
-    await expect(
-      page.getByRole("heading", { name: /2\. Resumo antes da confirmação/i }),
-    ).toBeVisible()
+  test("a clínica de exemplo abre e o paciente não entra no painel do gestor", async ({ page }) => {
+    await page.goto("/c/aurora")
+    await expect(page.getByRole("heading", { name: /Aurora/i })).toBeVisible()
 
-    // Tenta acessar /gestor enquanto autenticado como Paciente (Mariana Costa)
-    await page.goto("/gestor")
+    await page.goto("/c/aurora/paciente")
+    await expect(page.getByRole("heading", { name: "Olá, Mariana Costa" })).toBeVisible()
+
+    await page.goto("/c/aurora/gestor")
     await expect(
-      page.getByRole("heading", { name: /Acesso restrito ao perfil de Gestor/i }),
+      page.getByRole("heading", { name: "Troque de perfil para abrir esta área" }),
     ).toBeVisible()
   })
 
-  test("alternância de perfis permite conduzir consulta pela recepção, dentista e gestor", async ({
-    page,
-  }) => {
+  test("as rotas antigas redirecionam para a clínica de exemplo", async ({ page }) => {
     await page.goto("/recepcao")
-    // Alterna para Recepção
-    await page.getByRole("button", { name: /Alternar para Lucas Ferreira/i }).click()
-    await expect(
-      page.getByRole("heading", { name: /Recepção — Operação da Clínica/i }),
-    ).toBeVisible()
+    await expect(page).toHaveURL(/\/c\/aurora\/recepcao$/)
+  })
 
-    // Alterna para Dentista
-    await page.goto("/dentista")
-    await page.getByRole("button", { name: /Alternar para Dra\. Helena Martins/i }).click()
-    await expect(
-      page.getByRole("heading", { name: /Portal do Cirurgião-Dentista/i }),
-    ).toBeVisible()
+  test("alternar o perfil abre recepção, dentista e gestor", async ({ page }) => {
+    test.setTimeout(90_000)
+    await page.goto("/c/aurora/recepcao")
+    await page.getByLabel("Alternar perfil demonstrativo").selectOption({ label: "Recepção — Lucas Ferreira" })
+    await expect(page.getByRole("heading", { name: "Recepção" })).toBeVisible()
 
-    // Alterna para Gestor
-    await page.goto("/gestor")
-    await page.getByRole("button", { name: /Alternar para Roberto Vasconcelos/i }).click()
-    await expect(
-      page.getByRole("heading", { name: /Gestão da Clínica — Dashboard e Configurações/i }),
-    ).toBeVisible()
-    await expect(page.getByText(/Ocupação planejada/i).first()).toBeVisible()
+    await page.goto("/c/aurora/dentista")
+    await page
+      .getByLabel("Alternar perfil demonstrativo")
+      .selectOption({ label: "Dentista (Dra. Helena) — Dra. Helena Martins" })
+    await expect(page.getByRole("heading", { name: "Dra. Helena Martins" })).toBeVisible()
+
+    await page.goto("/c/aurora/gestor")
+    await page.getByLabel("Alternar perfil demonstrativo").selectOption({ label: "Gestor — Roberto Vasconcelos" })
+    await expect(page.getByRole("heading", { name: "Gestão da Clínica" })).toBeVisible()
+    await expect(page.getByText("Ocupação planejada").first()).toBeVisible()
   })
 })

@@ -12,6 +12,7 @@ export type CodigoErro =
   | "presenca_nao_permitida"
   | "entrada_invalida"
   | "relogio_invalido"
+  | "clinica_nao_encontrada"
 
 export type ErroCampo = {
   campo: string
