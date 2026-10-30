@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+:root {
+  /* NSW Government Brand & Digital Design System Palette */
+  --nsw-brand-dark: #002664;
+  --nsw-brand-supplementary: #146cfd;
+  --nsw-brand-light: #cbedfd;
+  --nsw-brand-accent: #d7153a;
+  --nsw-health-dark: #004047;
+  --nsw-health-light: #e3f3f4;
+  --nsw-grey-01: #22272b;
+  --nsw-grey-02: #495054;
+  --nsw-grey-03: #cdd3d9;
+  --nsw-grey-04: #ebebeb;
+  --nsw-off-white: #f2f4f7;
+  --nsw-white: #ffffff;
+  --nsw-status-success: #006938;
+  --nsw-status-success-bg: #e5f5ec;
+  --nsw-status-warning: #944600;
+  --nsw-status-warning-bg: #fff3e5;
+  --nsw-status-error: #b81237;
+  --nsw-status-error-bg: #fbe9ed;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    background-color: var(--nsw-off-white);
+    color: var(--nsw-grey-01);
+    font-family:
+      "Public Sans",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: var(--nsw-off-white);
+    color: var(--nsw-grey-01);
+    line-height: 1.5;
+  }
+
+  /* High-contrast WCAG 2.2 AA Focus Indicator (NSW Design System standard) */
+  *:focus-visible {
+    outline: 3px solid var(--nsw-brand-supplementary);
+    outline-offset: 2px;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -6,7 +6,11 @@
     "node": ">=22.20.0 <23"
   },
   "scripts": {
-    "test": "pnpm --filter @sgc/backend test",
-    "typecheck": "pnpm --filter @sgc/backend typecheck"
+    "dev": "corepack pnpm --filter @sgc/frontend dev",
+    "build": "corepack pnpm --filter @sgc/frontend build",
+    "lint": "corepack pnpm --filter @sgc/frontend lint",
+    "test": "corepack pnpm --filter @sgc/backend test",
+    "test:e2e": "corepack pnpm --filter @sgc/frontend test:e2e",
+    "typecheck": "corepack pnpm -r typecheck"
   }
 }
